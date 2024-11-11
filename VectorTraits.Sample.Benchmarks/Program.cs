@@ -1,4 +1,7 @@
-﻿namespace Zyl.VectorTraits.Sample.Benchmarks {
+﻿using System;
+using Zyl.VectorTraits;
+
+namespace Zyl.VectorTraits.Sample.Benchmarks {
     internal class Program {
         static void Main(string[] args) {
             Console.WriteLine("Zyl.VectorTraits.Sample.Benchmarks");
