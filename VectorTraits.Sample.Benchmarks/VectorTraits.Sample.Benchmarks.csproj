@@ -8,4 +8,6 @@
     <RootNamespace>Zyl.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
 
+  <Import Project="..\VectorTraits.Sample.Benchmarks.Inc\VectorTraits.Sample.Benchmarks.Inc.projitems" Label="Shared" />
+
 </Project>

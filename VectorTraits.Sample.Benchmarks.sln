@@ -5,6 +5,8 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VectorTraits.Sample.Benchmarks", "VectorTraits.Sample.Benchmarks\VectorTraits.Sample.Benchmarks.csproj", "{C31DCD00-EBA8-4383-8FD6-579268E059B5}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "VectorTraits.Sample.Benchmarks.Inc", "VectorTraits.Sample.Benchmarks.Inc\VectorTraits.Sample.Benchmarks.Inc.shproj", "{51FCDC93-A481-4506-BE02-9560C67B7811}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,5 +23,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0D125B75-5483-4D70-8D71-493E46B34701}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		VectorTraits.Sample.Benchmarks.Inc\VectorTraits.Sample.Benchmarks.Inc.projitems*{51fcdc93-a481-4506-be02-9560c67b7811}*SharedItemsImports = 13
+		VectorTraits.Sample.Benchmarks.Inc\VectorTraits.Sample.Benchmarks.Inc.projitems*{c31dcd00-eba8-4383-8fd6-579268e059b5}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal
