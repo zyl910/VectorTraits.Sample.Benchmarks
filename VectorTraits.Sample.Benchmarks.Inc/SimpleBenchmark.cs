@@ -1,10 +1,17 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿#undef BENCHMARKS_OFF
+
+using BenchmarkDotNet.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace Zyl.VectorTraits.Sample.Benchmarks {
+#if BENCHMARKS_OFF
+    using BenchmarkAttribute = FakeBenchmarkAttribute;
+#else
+#endif // BENCHMARKS_OFF
+
     public class SimpleBenchmark {
         private int[] field = Enumerable.Range(0, 100).ToArray();
 

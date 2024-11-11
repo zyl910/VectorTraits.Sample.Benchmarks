@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BenchmarksGlobal.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FakeBenchmarkAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SimpleBenchmark.cs" />
   </ItemGroup>
 </Project>
