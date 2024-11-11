@@ -24,9 +24,10 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
                 // Message: Arm64 is not supported (Iced library limitation)
             }
             config = config.AddJob(Job.MediumRun
-                .WithLaunchCount(1)
-                .WithToolchain(InProcessEmitToolchain.Instance)
-                .WithId("InProcess"));
+                //.WithLaunchCount(1)
+                //.WithToolchain(InProcessEmitToolchain.Instance)
+                //.WithId("InProcess")
+                );
             var summary = BenchmarkRunner.Run(typeof(Program).Assembly, config);
             writer.WriteLine("Length={0}, {1}", summary.Length, summary);
         }
