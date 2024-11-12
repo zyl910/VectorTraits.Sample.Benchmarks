@@ -12,7 +12,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
     internal class Program {
         static void Main(string[] args) {
             TextWriter writer = Console.Out;
-            writer.WriteLine("Zyl.VectorTraits.Sample.Benchmarks");
+            writer.WriteLine("VectorTraits.Sample.Benchmarks");
             BenchmarksGlobal.Init();
             writer.WriteLine();
             // Run.
