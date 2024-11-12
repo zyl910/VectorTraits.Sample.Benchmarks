@@ -3,6 +3,8 @@
 using BenchmarkDotNet.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -51,9 +53,39 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
                 new double[Count],
                 new double[Count]
             };
+            // Check.
+            bool allowCheck = true;
+            if (allowCheck) {
+                try {
+                    TextWriter writer = Console.Out;
+                    double[][] expected = Linq();
+                    double[][] dst;
+                    // Unzip.
+                    dst = Unzip();
+                    if (!CheckEquals(expected, dst)) writer.WriteLine("Unzip results are not correct!");
+                    // Soonts.
+#if NET7_0_OR_GREATER
+                    dst = Soonts();
+                    if (!CheckEquals(expected, dst)) writer.WriteLine("Soonts results are not correct!");
+#endif // NET7_0_OR_GREATER
+                } catch (Exception ex) {
+                    Debug.WriteLine(ex.ToString());
+                }
+            }
         }
 
-        [Benchmark]
+        private bool CheckEquals(double[][] expected, double[][] dst) {
+            if (expected == dst) return true;
+            if (null == expected) return false;
+            if (null == dst) return false;
+            if (expected.Length != dst.Length) return false;
+            for (int i = 0; i < expected.Length; ++i) {
+                if (!expected[i].SequenceEqual(dst[i])) return false;
+            }
+            return true;
+        }
+
+        //[Benchmark]
         public double[][] Linq() {
             var result = new double[4][];
 
@@ -65,7 +97,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
             return result;
         }
 
-        [Benchmark(Baseline = true)]
+        //[Benchmark(Baseline = true)]
         public double[][] ParallelFor() {
             var result = new double[][]
             {
@@ -110,9 +142,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
         }
 
         public static double[][] UnzipBatch(ReadOnlySpan<double> source, double[][] destinationArray = null) {
-            int length = source.Length;
+            const int groupSize = 4; // XYZW
+            int length = source.Length / groupSize;
             if (length <= 0) throw new ArgumentException("length <= 0!");
-            if (0 != (length % 4)) throw new ArgumentException("0 != (length % 4)!");
 
             double[][] result = destinationArray;
             if (null == result || result.Length < 4 || result[0].Length < length || result[1].Length < length || result[2].Length < length || result[3].Length < length) {
