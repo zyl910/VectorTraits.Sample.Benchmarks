@@ -32,6 +32,7 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		VectorTraits.Sample.Benchmarks.Inc\VectorTraits.Sample.Benchmarks.Inc.projitems*{51fcdc93-a481-4506-be02-9560c67b7811}*SharedItemsImports = 13
+		VectorTraits.Sample.Benchmarks.Inc\VectorTraits.Sample.Benchmarks.Inc.projitems*{6c30313f-2cca-4d50-a976-b45fb35672e9}*SharedItemsImports = 4
 		VectorTraits.Sample.Benchmarks.Inc\VectorTraits.Sample.Benchmarks.Inc.projitems*{c31dcd00-eba8-4383-8fd6-579268e059b5}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

@@ -85,7 +85,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
             return true;
         }
 
-        //[Benchmark]
+        [Benchmark]
         public double[][] Linq() {
             var result = new double[4][];
 
@@ -97,7 +97,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
             return result;
         }
 
-        //[Benchmark(Baseline = true)]
+        [Benchmark(Baseline = true)]
         public double[][] ParallelFor() {
             var result = new double[][]
             {
