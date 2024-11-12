@@ -1,4 +1,4 @@
-﻿#undef BENCHMARKS_OFF
+﻿//#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -13,7 +13,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
 #endif // BENCHMARKS_OFF
 
     public class SimpleBenchmark {
-        private int[] field = Enumerable.Range(0, 100).ToArray();
+        private readonly int[] field = Enumerable.Range(0, 100).ToArray();
 
         [Benchmark]
         public int SumLocal() {

@@ -43,7 +43,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
 #endif
 
             // Output.
-            string? indent = "";
+            string indent = "";
             TextWriter writer = Console.Out;
             writer.WriteLine(indent + string.Format("IsRelease:\t{0}", IsRelease));
             writer.WriteLine(indent + string.Format("Environment.Version:\t{0}", Environment.Version));

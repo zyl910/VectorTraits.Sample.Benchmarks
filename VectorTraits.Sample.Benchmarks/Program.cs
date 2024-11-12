@@ -23,7 +23,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
             } else {
                 // Message: Arm64 is not supported (Iced library limitation)
             }
-            config = config.AddJob(Job.MediumRun
+            config = config.AddJob(Job.Default //Job.MediumRun
                 //.WithLaunchCount(1)
                 //.WithToolchain(InProcessEmitToolchain.Instance)
                 //.WithId("InProcess")
