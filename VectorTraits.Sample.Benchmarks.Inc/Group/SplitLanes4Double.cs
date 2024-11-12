@@ -1,5 +1,6 @@
 ﻿#undef BENCHMARKS_OFF
 
+using BenchmarkDotNet.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using BenchmarkDotNet.Attributes;
+using Zyl.VectorTraits;
 
 namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
 #if BENCHMARKS_OFF
@@ -98,6 +99,78 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
 
             return result;
         }
+
+        // == Use VectorTraits. https://www.nuget.org/packages/VectorTraits
+
+        [Benchmark]
+        public double[][] Unzip() {
+            ReadOnlySpan<double> source = MemoryMarshal.Cast<Coordinate4D, double>(_array.AsSpan());
+            var result = UnzipBatch(source, _destinationArray);
+            return result;
+        }
+
+        public static double[][] UnzipBatch(ReadOnlySpan<double> source, double[][] destinationArray = null) {
+            int length = source.Length;
+            if (length <= 0) throw new ArgumentException("length <= 0!");
+            if (0 != (length % 4)) throw new ArgumentException("0 != (length % 4)!");
+
+            double[][] result = destinationArray;
+            if (null == result || result.Length < 4 || result[0].Length < length || result[1].Length < length || result[2].Length < length || result[3].Length < length) {
+                result = new double[][] {
+                        new double[length],
+                        new double[length],
+                        new double[length],
+                        new double[length]
+                    };
+            }
+
+            unsafe {
+                fixed (double* p = source)
+                fixed (double* x = result[0])
+                fixed (double* y = result[1])
+                fixed (double* z = result[2])
+                fixed (double* w = result[3]) {
+                    UnzipBatch(p, length, x, y, z, w);
+                }
+            }
+            return result;
+        }
+
+        static unsafe void UnzipBatch(double* source, int length, double* x, double* y, double* z, double* w) {
+            const int groupSize = 4; // XYZW
+            int vectorWidth = Vector<double>.Count;
+            int blockSize = vectorWidth * groupSize;
+            int maskAlign = -vectorWidth;
+            double* pEndAligned = source + (length & maskAlign) * groupSize;
+            double* pEnd = source + length * groupSize;
+            double* p = source;
+
+            // Handle majority
+            for (; p < pEndAligned; p += blockSize, x += vectorWidth, y += vectorWidth, z += vectorWidth, w += vectorWidth) {
+                // Load
+                Vector<double>* pVector = (Vector<double>*)p;
+                Vector<double> a0 = pVector[0];
+                Vector<double> a1 = pVector[1];
+                Vector<double> a2 = pVector[2];
+                Vector<double> a3 = pVector[3];
+                // Group4Unzip
+                var b0 = Vectors.YGroup4Unzip(a0, a1, a2, a3, out var b1, out var b2, out var b3);
+                // Store
+                *(Vector<double>*)x = b0;
+                *(Vector<double>*)y = b1;
+                *(Vector<double>*)z = b2;
+                *(Vector<double>*)w = b3;
+            }
+
+            // Handle remainder
+            for (; p < pEnd; p += groupSize, x++, y++, z++, w++) {
+                *x = p[0];
+                *y = p[1];
+                *z = p[2];
+                *w = p[3];
+            }
+        }
+
 
         // == From Soonts. https://stackoverflow.com/questions/77984612/how-do-i-optimally-fill-multiple-arrays-with-simds-vectors/
 #if NET7_0_OR_GREATER // Vector128.Load need .NET 7.0
