@@ -27,7 +27,6 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
     /// <summary>
     /// How do I optimally fill multiple arrays with SIMDs vectors? https://stackoverflow.com/questions/77984612/how-do-i-optimally-fill-multiple-arrays-with-simds-vectors/
     /// </summary>
-    [MemoryDiagnoser(false)]
     public class SplitLanes4Double {
         private static readonly Random _random = new Random(1337);
         private static Coordinate4D[] _array;
