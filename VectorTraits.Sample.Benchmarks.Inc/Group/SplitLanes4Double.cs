@@ -28,6 +28,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
     public class SplitLanes4Double {
         private static readonly Random _random = new Random(1337);
         private static Coordinate4D[] _array;
+        private static double[][] _destinationArray;
 
         [Params(1000, 10_000, 100_000)]
         public int Count { get; set; }
@@ -43,6 +44,12 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
                     return new Coordinate4D(x, y, z, w);
                 })
                 .ToArray();
+            _destinationArray = new double[][] {
+                new double[Count],
+                new double[Count],
+                new double[Count],
+                new double[Count]
+            };
         }
 
         [Benchmark]
@@ -78,20 +85,34 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
             return result;
         }
 
+        [Benchmark]
+        public double[][] ParallelForNoNew() {
+            var result = _destinationArray;
+
+            Parallel.For(0, Count, i => {
+                result[0][i] = _array[i].X;
+                result[1][i] = _array[i].Y;
+                result[2][i] = _array[i].Z;
+                result[3][i] = _array[i].W;
+            });
+
+            return result;
+        }
+
         // == From Soonts. https://stackoverflow.com/questions/77984612/how-do-i-optimally-fill-multiple-arrays-with-simds-vectors/
 #if NET7_0_OR_GREATER // Vector128.Load need .NET 7.0
 
         [Benchmark]
         public double[][] Soonts() {
             ReadOnlySpan<Vector256<double>> source = MemoryMarshal.Cast<Coordinate4D, Vector256<double>>(_array.AsSpan());
-            var result = SplitLanesParallel.splitLanes(source, false);
+            var result = SplitLanesParallel.splitLanes(source, false, _destinationArray);
             return result;
         }
 
         [Benchmark]
         public double[][] SoontsParallel() {
             ReadOnlySpan<Vector256<double>> source = MemoryMarshal.Cast<Coordinate4D, Vector256<double>>(_array.AsSpan());
-            var result = SplitLanesParallel.splitLanes(source, true);
+            var result = SplitLanesParallel.splitLanes(source, true, _destinationArray);
             return result;
         }
 
@@ -108,18 +129,20 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
             static readonly int countThreads = Math.Clamp(Environment.ProcessorCount / 2, 2, 8);
 
             /// <summary>Split lanes of vectors into 4 new arrays</summary>
-            public static double[][] splitLanes(ReadOnlySpan<Vector256<double>> source, bool useParallel = false) {
+            public static double[][] splitLanes(ReadOnlySpan<Vector256<double>> source, bool useParallel = false, double[][] destinationArray = null) {
                 int length = source.Length;
                 if (length <= 0)
                     throw new ArgumentException();
 
-                var result = new double[4][]
-                {
-                    new double[length],
-                    new double[length],
-                    new double[length],
-                    new double[length]
-                };
+                double[][] result = destinationArray;
+                if (null== result || result.Length<4 || result[0].Length< length || result[1].Length < length || result[2].Length < length || result[3].Length < length) {
+                    result = new double[][] {
+                        new double[length],
+                        new double[length],
+                        new double[length],
+                        new double[length]
+                    };
+                }
 
                 unsafe {
                     fixed (Vector256<double>* rsi = source)
@@ -298,8 +321,6 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
 
     [StructLayout(LayoutKind.Explicit, Size = 32)]
     readonly struct Coordinate4D {
-        //[FieldOffset(0)]
-        //readonly Vector256<double> _vector;
         [FieldOffset(0)]
         readonly double _x;
         [FieldOffset(8)]
@@ -309,7 +330,6 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
         [FieldOffset(24)]
         readonly double _w;
 
-        //public Vector256<double> Vector => _vector;
         public double X => _x;
         public double Y => _y;
         public double Z => _z;
