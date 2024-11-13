@@ -62,10 +62,15 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
                     // Unzip.
                     dst = Unzip();
                     if (!CheckEquals(expected, dst)) writer.WriteLine("Unzip results are not correct!");
+                    // UnzipParallel.
+                    dst = UnzipParallel();
+                    if (!CheckEquals(expected, dst)) writer.WriteLine("UnzipParallel results are not correct!");
                     // Soonts.
 #if NET7_0_OR_GREATER
                     dst = Soonts();
                     if (!CheckEquals(expected, dst)) writer.WriteLine("Soonts results are not correct!");
+                    dst = SoontsParallel();
+                    if (!CheckEquals(expected, dst)) writer.WriteLine("SoontsParallel results are not correct!");
 #endif // NET7_0_OR_GREATER
                 } catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
@@ -136,11 +141,20 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
         [Benchmark]
         public double[][] Unzip() {
             ReadOnlySpan<double> source = MemoryMarshal.Cast<Coordinate4D, double>(_array.AsSpan());
-            var result = UnzipBatch(source, _destinationArray);
+            var result = UnzipBatch(source, false, _destinationArray);
             return result;
         }
 
-        public static double[][] UnzipBatch(ReadOnlySpan<double> source, double[][] destinationArray = null) {
+        [Benchmark]
+        public double[][] UnzipParallel() {
+            ReadOnlySpan<double> source = MemoryMarshal.Cast<Coordinate4D, double>(_array.AsSpan());
+            var result = UnzipBatch(source, true, _destinationArray);
+            return result;
+        }
+
+        public static double[][] UnzipBatch(ReadOnlySpan<double> source, bool useParallel = false, double[][] destinationArray = null) {
+            const int parallelThreshold = 1024 * 4;
+            const int minBatchSize = 1024;
             const int groupSize = 4; // XYZW
             int length = source.Length / groupSize;
             if (length <= 0) throw new ArgumentException("length <= 0!");
@@ -161,7 +175,27 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
                 fixed (double* y = result[1])
                 fixed (double* z = result[2])
                 fixed (double* w = result[3]) {
-                    UnzipBatch(p, length, x, y, z, w);
+                    int processorCount = Environment.ProcessorCount;
+                    bool allowParallel = useParallel && (length > parallelThreshold) && (processorCount > 1);
+                    if (allowParallel) {
+                        //int batchSize = minBatchSize;
+                        int batchSize = (length / processorCount / 2) & (-minBatchSize);
+                        if (batchSize < minBatchSize) batchSize = minBatchSize;
+                        int batchCount = (length + batchSize - 1) / batchSize; // ceil((double)length / batchSize)
+                        //Console.WriteLine(string.Format("batchSize={0}, batchCount={1} // 0x{0:X}, 0x{1:X}", batchSize, batchCount));
+                        double* p0 = p;
+                        double* x0 = x, y0 = y, z0 = z, w0 = w;
+                        Parallel.For(0, batchCount, i => {
+                            int start = batchSize * i;
+                            int len = batchSize;
+                            if (start + len > length) len = length - start;
+                            double* p2 = p0 + start * groupSize;
+                            //UnzipBatch(p2, len, x + start, y + start, z + start, w + start); // Error CS1764	Cannot use fixed local 'p' inside an anonymous method, lambda expression, or query expression
+                            UnzipBatch(p2, len, x0 + start, y0 + start, z0 + start, w0 + start);
+                        });
+                    } else {
+                        UnzipBatch(p, length, x, y, z, w);
+                    }
                 }
             }
             return result;
