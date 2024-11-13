@@ -482,3 +482,97 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
         }
     }
 }
+
+// == Benchmarks result
+
+// -- `.NET8.0` on Arm
+// BenchmarkDotNet v0.14.0, macOS Sequoia 15.0.1 (24A348) [Darwin 24.0.0]
+// Apple M2, 1 CPU, 8 logical and 8 physical cores
+// .NET SDK 8.0.204
+//   [Host]     : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD [AttachedDebugger]
+//   DefaultJob : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+// 
+// | Method           | Count  | Mean         | Error       | StdDev      | Ratio | RatioSD |
+// |----------------- |------- |-------------:|------------:|------------:|------:|--------:|
+// | Linq             | 1000   |   7,302.9 ns |     8.86 ns |     8.29 ns |  0.63 |    0.00 |
+// | ParallelFor      | 1000   |  11,522.6 ns |    75.72 ns |    70.83 ns |  1.00 |    0.01 |
+// | ParallelForNoNew | 1000   |  10,134.9 ns |    39.63 ns |    33.09 ns |  0.88 |    0.01 |
+// | Unzip            | 1000   |     657.7 ns |     1.20 ns |     1.12 ns |  0.06 |    0.00 |
+// | UnzipParallel    | 1000   |     650.9 ns |     1.65 ns |     1.54 ns |  0.06 |    0.00 |
+// | Soonts           | 1000   |           NA |          NA |          NA |     ? |       ? |
+// | SoontsParallel   | 1000   |           NA |          NA |          NA |     ? |       ? |
+// |                  |        |              |             |             |       |         |
+// | Linq             | 10000  |  70,962.2 ns |    56.27 ns |    52.63 ns |  2.04 |    0.02 |
+// | ParallelFor      | 10000  |  34,750.8 ns |   301.04 ns |   281.59 ns |  1.00 |    0.01 |
+// | ParallelForNoNew | 10000  |  25,168.9 ns |   150.15 ns |   140.45 ns |  0.72 |    0.01 |
+// | Unzip            | 10000  |   8,860.4 ns |    16.40 ns |    15.34 ns |  0.25 |    0.00 |
+// | UnzipParallel    | 10000  |   9,340.8 ns |    49.81 ns |    46.59 ns |  0.27 |    0.00 |
+// | Soonts           | 10000  |           NA |          NA |          NA |     ? |       ? |
+// | SoontsParallel   | 10000  |           NA |          NA |          NA |     ? |       ? |
+// |                  |        |              |             |             |       |         |
+// | Linq             | 100000 | 871,966.5 ns | 7,968.57 ns | 7,453.80 ns |  3.29 |    0.04 |
+// | ParallelFor      | 100000 | 265,150.8 ns | 3,256.47 ns | 2,886.78 ns |  1.00 |    0.01 |
+// | ParallelForNoNew | 100000 | 152,403.4 ns | 1,719.17 ns | 1,524.00 ns |  0.57 |    0.01 |
+// | Unzip            | 100000 |  89,025.7 ns |   101.08 ns |    94.55 ns |  0.34 |    0.00 |
+// | UnzipParallel    | 100000 |  42,555.0 ns |   303.98 ns |   284.34 ns |  0.16 |    0.00 |
+// | Soonts           | 100000 |           NA |          NA |          NA |     ? |       ? |
+// | SoontsParallel   | 100000 |           NA |          NA |          NA |     ? |       ? |
+
+// -- `.NET8.0` on X86
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4460/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+// .NET SDK 8.0.403
+//   [Host]     : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+//   DefaultJob : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+// 
+// | Method           | Count  | Mean           | Error        | StdDev       | Median         | Ratio | RatioSD | Code Size |
+// |----------------- |------- |---------------:|-------------:|-------------:|---------------:|------:|--------:|----------:|
+// | Linq             | 1000   |     7,802.5 ns |    151.61 ns |    174.59 ns |     7,808.9 ns |  0.87 |    0.02 |   3,381 B |
+// | ParallelFor      | 1000   |     9,010.2 ns |    134.49 ns |    125.80 ns |     8,968.6 ns |  1.00 |    0.02 |        NA |
+// | ParallelForNoNew | 1000   |     7,863.9 ns |     28.89 ns |     27.03 ns |     7,861.1 ns |  0.87 |    0.01 |        NA |
+// | Unzip            | 1000   |       498.9 ns |      5.01 ns |      4.69 ns |       497.7 ns |  0.06 |    0.00 |        NA |
+// | UnzipParallel    | 1000   |       496.9 ns |      5.28 ns |      4.94 ns |       496.7 ns |  0.06 |    0.00 |        NA |
+// | Soonts           | 1000   |       440.9 ns |      1.96 ns |      1.74 ns |       441.1 ns |  0.05 |    0.00 |        NA |
+// | SoontsParallel   | 1000   |       440.6 ns |      2.34 ns |      2.19 ns |       440.9 ns |  0.05 |    0.00 |        NA |
+// |                  |        |                |              |              |                |       |         |           |
+// | Linq             | 10000  |    72,536.3 ns |    795.69 ns |    705.36 ns |    72,661.0 ns |  3.22 |    0.06 |   3,381 B |
+// | ParallelFor      | 10000  |    22,551.1 ns |    387.31 ns |    362.29 ns |    22,541.3 ns |  1.00 |    0.02 |        NA |
+// | ParallelForNoNew | 10000  |    13,441.4 ns |     61.79 ns |     57.80 ns |    13,441.4 ns |  0.60 |    0.01 |        NA |
+// | Unzip            | 10000  |     4,771.7 ns |     31.01 ns |     29.00 ns |     4,778.2 ns |  0.21 |    0.00 |        NA |
+// | UnzipParallel    | 10000  |     4,937.8 ns |     29.44 ns |     26.10 ns |     4,942.1 ns |  0.22 |    0.00 |        NA |
+// | Soonts           | 10000  |     4,426.8 ns |     43.07 ns |     40.29 ns |     4,429.2 ns |  0.20 |    0.00 |        NA |
+// | SoontsParallel   | 10000  |    15,678.5 ns |    194.98 ns |    182.38 ns |    15,618.7 ns |  0.70 |    0.01 |        NA |
+// |                  |        |                |              |              |                |       |         |           |
+// | Linq             | 100000 | 1,325,172.3 ns | 26,322.40 ns | 49,439.85 ns | 1,323,487.3 ns |  3.18 |    0.72 |   3,343 B |
+// | ParallelFor      | 100000 |   437,942.7 ns | 33,489.64 ns | 98,744.95 ns |   411,440.4 ns |  1.05 |    0.34 |        NA |
+// | ParallelForNoNew | 100000 |    58,496.1 ns |    922.52 ns |    817.79 ns |    58,215.5 ns |  0.14 |    0.03 |        NA |
+// | Unzip            | 100000 |    57,467.8 ns |    802.26 ns |    711.18 ns |    57,497.7 ns |  0.14 |    0.03 |        NA |
+// | UnzipParallel    | 100000 |    18,033.7 ns |    351.31 ns |    375.90 ns |    18,099.2 ns |  0.04 |    0.01 |        NA |
+// | Soonts           | 100000 |    61,783.5 ns |  1,197.89 ns |  1,426.00 ns |    61,583.4 ns |  0.15 |    0.03 |        NA |
+// | SoontsParallel   | 100000 |    29,202.8 ns |    249.69 ns |    233.56 ns |    29,294.6 ns |  0.07 |    0.02 |        NA |
+
+// -- `.NET Framework` on X86
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4460/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+//   [Host]     : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+//   DefaultJob : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+// 
+// | Method           | Count  | Mean         | Error       | StdDev      | Median       | Ratio | RatioSD | Code Size |
+// |----------------- |------- |-------------:|------------:|------------:|-------------:|------:|--------:|----------:|
+// | Linq             | 1000   |    37.033 us |   0.5153 us |   0.4303 us |    37.097 us |  3.61 |    0.06 |   2,258 B |
+// | ParallelFor      | 1000   |    10.249 us |   0.1346 us |   0.1193 us |    10.211 us |  1.00 |    0.02 |   8,883 B |
+// | ParallelForNoNew | 1000   |     9.619 us |   0.1899 us |   0.2260 us |     9.642 us |  0.94 |    0.02 |   8,732 B |
+// | Unzip            | 1000   |     8.139 us |   0.1492 us |   0.1395 us |     8.098 us |  0.79 |    0.02 |   5,096 B |
+// | UnzipParallel    | 1000   |     8.290 us |   0.1166 us |   0.1091 us |     8.257 us |  0.81 |    0.01 |   5,099 B |
+// |                  |        |              |             |             |              |       |         |           |
+// | Linq             | 10000  |   440.397 us |   5.8768 us |   5.2096 us |   438.828 us | 14.12 |    0.31 |   2,258 B |
+// | ParallelFor      | 10000  |    31.209 us |   0.5914 us |   0.6073 us |    30.966 us |  1.00 |    0.03 |   8,883 B |
+// | ParallelForNoNew | 10000  |    20.223 us |   0.1624 us |   0.1440 us |    20.237 us |  0.65 |    0.01 |   8,732 B |
+// | Unzip            | 10000  |    76.318 us |   0.7444 us |   0.6963 us |    76.385 us |  2.45 |    0.05 |   5,214 B |
+// | UnzipParallel    | 10000  |    36.299 us |   0.3027 us |   0.2364 us |    36.355 us |  1.16 |    0.02 |   5,217 B |
+// |                  |        |              |             |             |              |       |         |           |
+// | Linq             | 100000 | 5,474.105 us | 108.7900 us | 175.6756 us | 5,488.038 us | 14.49 |    1.39 |   2,258 B |
+// | ParallelFor      | 100000 |   381.343 us |  13.9218 us |  38.5773 us |   367.393 us |  1.01 |    0.14 |   8,883 B |
+// | ParallelForNoNew | 100000 |    83.610 us |   1.2179 us |   1.1392 us |    83.295 us |  0.22 |    0.02 |   8,732 B |
+// | Unzip            | 100000 |   947.284 us |   8.7045 us |   8.1422 us |   949.734 us |  2.51 |    0.23 |   5,214 B |
+// | UnzipParallel    | 100000 |   253.043 us |   4.6891 us |   4.8153 us |   253.532 us |  0.67 |    0.06 |   5,217 B |
