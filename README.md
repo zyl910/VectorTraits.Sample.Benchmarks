@@ -10,5 +10,8 @@ VectorTraits is a cross-platform library that enhances SIMD vector operations (V
 - Online document: https://zyl910.github.io/VectorTraits_doc/
 - NuGet: https://www.nuget.org/packages/VectorTraits
 
+Supported .NET versions: .NET Framework 4.5~4.8.1, .NET Core 2.0~3.1, .NET 5.0~8.0 .
+
+Supported architectures: X86(Include X86-64), Arm.
 
 Sample list: [SampleList](SampleList.md)
