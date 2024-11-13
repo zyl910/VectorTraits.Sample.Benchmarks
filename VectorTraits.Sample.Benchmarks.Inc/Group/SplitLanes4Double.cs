@@ -271,6 +271,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
                 int length = source.Length;
                 if (length <= 0)
                     throw new ArgumentException();
+                if (!Avx2.IsSupported) throw new NotSupportedException("Not support X86's Avx2!");
 
                 double[][] result = destinationArray;
                 if (null== result || result.Length<4 || result[0].Length< length || result[1].Length < length || result[2].Length < length || result[3].Length < length) {
