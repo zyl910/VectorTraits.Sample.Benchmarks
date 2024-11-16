@@ -1,13 +1,19 @@
-﻿using System;
+﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Running;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Numerics;
+using System.Runtime.InteropServices;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.Intrinsics;
 #endif
 using System.Text;
 using Zyl.VectorTraits;
+using Zyl.VectorTraits.Sample.Benchmarks.Group;
 
 namespace Zyl.VectorTraits.Sample.Benchmarks {
     /// <summary>
@@ -30,7 +36,8 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
         /// <summary>
         /// Do initialize (进行初始化).
         /// </summary>
-        public static void Init() {
+        /// <param name="writer">The TextWriter.</param>
+        public static void Init(TextWriter writer = null) {
             if (m_Inited) return;
             m_Inited = true;
             //string indentNext = indent + "\t";
@@ -44,7 +51,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
 
             // Output.
             string indent = "";
-            TextWriter writer = Console.Out;
+            if (null == writer) writer = Console.Out;
             writer.WriteLine(indent + string.Format("IsRelease:\t{0}", IsRelease));
             writer.WriteLine(indent + string.Format("Environment.Version:\t{0}", Environment.Version));
 #if (NET47 || NET462 || NET461 || NET46 || NET452 || NET451 || NET45 || NET40 || NET35 || NET20) || (NETSTANDARD1_0)
@@ -80,6 +87,55 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
 #else
             Trace.WriteLine("Zyl.VectorTraits.Sample.Benchmarks initialize done.");
 #endif
+        }
+
+        /// <summary>
+        /// Run benchmarks
+        /// </summary>
+        /// <param name="args">The command args.</param>
+        /// <param name="writer">The TextWriter.</param>
+        public static void RunBenchmarks(string[] args, TextWriter writer = null) {
+            if (null == writer) writer = Console.Out;
+            Init(writer);
+            writer.WriteLine();
+            // Command lines.
+            // -check   Only run check.
+            bool onlyCheck = false;
+            for (int i = 0; i < args.Length; i++) {
+                string cur = args[i];
+                if ("-check".Equals(cur, StringComparison.OrdinalIgnoreCase)) {
+                    onlyCheck = true;
+                }
+            }
+            // Run.
+            if (onlyCheck) {
+                DoCheck(writer);
+            } else {
+                Architecture architecture = RuntimeInformation.OSArchitecture;
+                var config = DefaultConfig.Instance;
+                if (architecture == Architecture.X86 || architecture == Architecture.X64) {
+                    config = config.AddDiagnoser(new DisassemblyDiagnoser(new DisassemblyDiagnoserConfig(maxDepth: 3, printSource: true, printInstructionAddresses: true, exportGithubMarkdown: true, exportHtml: true)));
+                } else {
+                    // Message: Arm64 is not supported (Iced library limitation)
+                }
+                config = config.AddJob(Job.Default //Job.MediumRun
+                                                   //.WithLaunchCount(1)
+                                                   //.WithToolchain(InProcessEmitToolchain.Instance)
+                                                   //.WithId("InProcess")
+                    );
+                var summary = BenchmarkRunner.Run(typeof(BenchmarksGlobal).Assembly, config);
+                writer.WriteLine("Length={0}, {1}", summary.Length, summary);
+            }
+        }
+
+        /// <summary>
+        /// Do check (进行测试).
+        /// </summary>
+        /// <param name="writer">The TextWriter.</param>
+        public static void DoCheck(TextWriter writer = null) {
+            var target = new SplitLanes4Double() { Count = 1000 };
+            target.Setup();
+            writer.WriteLine("Finish check.");
         }
 
     }
