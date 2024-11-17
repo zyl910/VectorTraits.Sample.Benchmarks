@@ -18,7 +18,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Zyl.VectorTraits;
-using Zyl.VectorTraits.Sample.Benchmarks.Group;
 
 namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 #if BENCHMARKS_OFF
@@ -113,6 +112,27 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             if (allowCheck) {
                 try {
                     TextWriter writer = Console.Out;
+                    long totalDifference, countByteDifference;
+                    int maxDifference;
+                    double averageDifference;
+                    long totalByte = Width * Height * 3;
+                    double percentageByteDifference;
+                    // Baseline
+                    ScalarDo(_sourceBitmapData, _expectedBitmapData);
+                    // PeterParallelScalar
+                    PeterParallelScalar();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentageByteDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of PeterParallelScalar: {0}/{1}={2}, max={3}, percentage={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentageByteDifference));
+#if NETCOREAPP3_0_OR_GREATER
+                    // PeterParallelScalar
+                    PeterParallelSimd();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentageByteDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of PeterParallelSimd: {0}/{1}={2}, max={3}, percentage={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentageByteDifference));
+#endif // NETCOREAPP3_0_OR_GREATER
                 } catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
                 }
@@ -132,12 +152,45 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             }
         }
 
+        private unsafe long SumDifference(BitmapData expected, BitmapData dst, out long countByteDifference, out int maxDifference) {
+            const int cbPixel = 3;
+            long totalDifference = 0;
+            countByteDifference = 0;
+            maxDifference = 0;
+            int width = expected.Width;
+            int height = expected.Height;
+            int strideSrc = expected.Stride;
+            int strideDst = dst.Stride;
+            byte* pRow = (byte*)expected.Scan0.ToPointer();
+            byte* qRow = (byte*)dst.Scan0.ToPointer();
+            for (int i = 0; i < height; i++) {
+                byte* p = pRow;
+                byte* q = qRow;
+                for (int j = 0; j < width; j++) {
+                    for (int k = 0; k < cbPixel; ++k) {
+                        int difference = Math.Abs((int)(q[k]) - p[k]);
+                        if (0 != difference) {
+                            totalDifference += difference;
+                            ++countByteDifference;
+                            if (maxDifference < difference) maxDifference = difference;
+                        }
+                        ++p;
+                        ++q;
+                    }
+                }
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+            return totalDifference;
+        }
+
         [Benchmark(Baseline = true)]
         public void Scalar() {
             ScalarDo(_sourceBitmapData, _destinationBitmapData);
         }
 
         public static unsafe void ScalarDo(BitmapData src, BitmapData dst) {
+            const int cbPixel = 3; // Bgr24
             const int shiftPoint = 16;
             const int mulPoint = 1 << shiftPoint; // 0x10000
             const int mulRed = (int)(0.299 * mulPoint); // 19595
@@ -154,7 +207,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                 byte* q = qRow;
                 for (int j = 0; j < width; j++) {
                     *q = (byte)((p[2] * mulRed + p[1] * mulGreen + p[0] * mulBlue) >> shiftPoint);
-                    p += 3; // Bgr24
+                    p += cbPixel; // Bgr24
                     q += 1; // Gray8
                 }
                 pRow += strideSrc;
