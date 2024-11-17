@@ -125,6 +125,12 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVectors: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsParallel
+                    UseVectorsParallel();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
                     // PeterParallelScalar
                     PeterParallelScalar();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
@@ -223,10 +229,45 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 
         [Benchmark]
         public void UseVectors() {
-            UseVectorsDo(_sourceBitmapData, _destinationBitmapData);
+            UseVectorsDo(_sourceBitmapData, _destinationBitmapData, false);
         }
 
-        public static unsafe void UseVectorsDo(BitmapData src, BitmapData dst) {
+        [Benchmark]
+        public void UseVectorsParallel() {
+            UseVectorsDo(_sourceBitmapData, _destinationBitmapData, true);
+        }
+
+        public static unsafe void UseVectorsDo(BitmapData src, BitmapData dst, bool useParallel = false) {
+            int vectorWidth = Vector<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            int processorCount = Environment.ProcessorCount;
+            int batchSize = height / (processorCount * 2);
+            bool allowParallel = useParallel && (batchSize > 0) && (processorCount > 1);
+            if (allowParallel) {
+                int batchCount = (height + batchSize - 1) / batchSize; // ceil((double)length / batchSize)
+                Parallel.For(0, batchCount, i => {
+                    int start = batchSize * i;
+                    int len = batchSize;
+                    if (start + len > height) len = height - start;
+                    byte* pSrc2 = pSrc + start * strideSrc;
+                    byte* pDst2 = pDst + start * strideDst;
+                    UseVectorsDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
+                });
+            } else {
+                UseVectorsDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+            }
+        }
+
+        public static unsafe void UseVectorsDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
             const int cbPixel = 3; // Bgr24
             const int shiftPoint = 8;
             const int mulPoint = 1 << shiftPoint; // 0x100
@@ -237,17 +278,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             Vector<ushort> vmulGreen = new Vector<ushort>(mulGreen);
             Vector<ushort> vmulBlue = new Vector<ushort>(mulBlue);
             int vectorWidth = Vector<byte>.Count;
-            int width = src.Width;
-            int height = src.Height;
-            if (width <= vectorWidth) {
-                ScalarDo(src, dst);
-                return;
-            }
             int maxX = width - vectorWidth;
-            int strideSrc = src.Stride;
-            int strideDst = dst.Stride;
-            byte* pRow = (byte*)src.Scan0.ToPointer();
-            byte* qRow = (byte*)dst.Scan0.ToPointer();
+            byte* pRow = pSrc;
+            byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
                 Vector<byte>* pLast = (Vector<byte>*)(pRow + maxX * cbPixel);
                 Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * 1);
