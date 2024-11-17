@@ -136,6 +136,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
         public static void DoCheck(TextWriter writer = null) {
             //var target = new SplitLanes4Double() { Count = 1000 };
             var target = new Bgr24ToGray8Benchmark() { Width = 1024 };
+            //var target = new Rgb32ToGray8Benchmark() { Width = 1024 };
             target.Setup();
             writer.WriteLine("Finish check.");
             if (target is IDisposable disposable) {

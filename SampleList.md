@@ -9,3 +9,4 @@
 ### Image
 
 - `Bgr24ToGray8Benchmark`: Why SIMD only improves performance by only a little bit for RGB to Grayscale, with SIMD multiply but scalar add of vector elements? https://stackoverflow.com/questions/77603639/why-simd-only-improves-performance-by-only-a-little-bit-for-rgb-to-grayscale-wi
+- `Rgb32ToGray8Benchmark`: How to convert byte array of image pixels data to grayscale using vector SSE operation? https://stackoverflow.com/questions/58881359/how-to-convert-byte-array-of-image-pixels-data-to-grayscale-using-vector-sse-ope/

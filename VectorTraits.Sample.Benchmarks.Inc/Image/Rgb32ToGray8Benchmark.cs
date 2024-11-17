@@ -1,4 +1,4 @@
-﻿#undef BENCHMARKS_OFF
+﻿//#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -26,9 +26,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 #endif // BENCHMARKS_OFF
 
     /// <summary>
-    /// Why SIMD only improves performance by only a little bit for RGB to Grayscale, with SIMD multiply but scalar add of vector elements? https://stackoverflow.com/questions/77603639/why-simd-only-improves-performance-by-only-a-little-bit-for-rgb-to-grayscale-wi
+    /// How to convert byte array of image pixels data to grayscale using vector SSE operation? https://stackoverflow.com/questions/58881359/how-to-convert-byte-array-of-image-pixels-data-to-grayscale-using-vector-sse-ope/
     /// </summary>
-    public class Bgr24ToGray8Benchmark : IDisposable {
+    public class Rgb32ToGray8Benchmark : IDisposable {
         private bool _disposed = false;
         private static readonly Random _random = new Random(1);
         private BitmapData _sourceBitmapData = null;
@@ -39,7 +39,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         public int Width { get; set; }
         public int Height { get; set; }
 
-        ~Bgr24ToGray8Benchmark() {
+        ~Rgb32ToGray8Benchmark() {
             Dispose(false);
         }
 
@@ -65,8 +65,8 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                 case PixelFormat.Format8bppIndexed:
                     stride = width * 1;
                     break;
-                case PixelFormat.Format24bppRgb:
-                    stride = width * 3;
+                case PixelFormat.Format32bppRgb:
+                    stride = width * 4;
                     break;
             }
             if (stride <= 0) throw new ArgumentOutOfRangeException($"Invalid pixel format({format})!");
@@ -101,7 +101,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             Height = Width;
             // Create.
             Cleanup();
-            _sourceBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
+            _sourceBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format32bppRgb);
             _destinationBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format8bppIndexed);
             _expectedBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format8bppIndexed);
             RandomFillBitmapData(_sourceBitmapData, _random);
@@ -130,19 +130,19 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVectorsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
-                    // PeterParallelScalar
-                    PeterParallelScalar();
-                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
-                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
-                    percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of PeterParallelScalar: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #if NETCOREAPP3_0_OR_GREATER
-                    // PeterParallelScalar
-                    PeterParallelSimd();
+                    // Soonts_MultiplyHigh
+                    Soonts_MultiplyHigh();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of PeterParallelSimd: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    writer.WriteLine(string.Format("Difference of Soonts_MultiplyHigh: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // User555045_MultiplyAddAdjacent
+                    User555045_MultiplyAddAdjacent();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of User555045_MultiplyAddAdjacent: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #endif // NETCOREAPP3_0_OR_GREATER
                 } catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
@@ -201,7 +201,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         public static unsafe void ScalarDo(BitmapData src, BitmapData dst) {
-            const int cbPixel = 3; // Bgr24
+            const int cbPixel = 4; // Rgb32
             const int shiftPoint = 16;
             const int mulPoint = 1 << shiftPoint; // 0x10000
             const int mulRed = (int)(0.299 * mulPoint); // 19595
@@ -217,8 +217,8 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                 byte* p = pRow;
                 byte* q = qRow;
                 for (int j = 0; j < width; j++) {
-                    *q = (byte)((p[2] * mulRed + p[1] * mulGreen + p[0] * mulBlue) >> shiftPoint);
-                    p += cbPixel; // Bgr24
+                    *q = (byte)((p[0] * mulRed + p[1] * mulGreen + p[2] * mulBlue) >> shiftPoint);
+                    p += cbPixel; // Rgb32
                     q += 1; // Gray8
                 }
                 pRow += strideSrc;
@@ -267,7 +267,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         public static unsafe void UseVectorsDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
-            const int cbPixel = 3; // Bgr24
+            const int cbPixel = 4; // Rgb32
             const int shiftPoint = 8;
             const int mulPoint = 1 << shiftPoint; // 0x100
             const ushort mulRed = (ushort)(0.299 * mulPoint); // 76
@@ -289,7 +289,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     Vector<byte> r, g, b, gray;
                     Vector<ushort> wr0, wr1, wg0, wg1, wb0, wb1;
                     // Load.
-                    b = Vectors.YGroup3Unzip(p[0], p[1], p[2], out g, out r);
+                    r = Vectors.YGroup4Unzip(p[0], p[1], p[2], p[3], out g, out b, out _);
                     // widen(r) * mulRed + widen(g) * mulGreen + widen(b) * mulBlue
                     Vector.Widen(r, out wr0, out wr1);
                     Vector.Widen(g, out wg0, out wg1);
@@ -323,108 +323,189 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
 
-        // == From Peter Cordes. https://stackoverflow.com/questions/77603639/why-simd-only-improves-performance-by-only-a-little-bit-for-rgb-to-grayscale-wi
+        // == From Soonts. https://stackoverflow.com/questions/58881359/how-to-convert-byte-array-of-image-pixels-data-to-grayscale-using-vector-sse-ope/
+#if NETCOREAPP3_0_OR_GREATER
 
         [Benchmark]
-        public void PeterParallelScalar() {
-            Peter.GrayViaParallel(_sourceBitmapData, _destinationBitmapData);
+        public void Soonts_MultiplyHigh() {
+            Soonts_MultiplyHighDo(_sourceBitmapData, _destinationBitmapData);
         }
 
-#if NETCOREAPP3_0_OR_GREATER
-        [Benchmark]
-        public unsafe void PeterParallelSimd() {
-            if (!Sse2.IsSupported) throw new NotSupportedException("Not support X86's Sse2!");
-            var org = _sourceBitmapData;
-            var des = _destinationBitmapData;
-            int width = org.Width;
-            int height = org.Height;
-
-            var orgp = (byte*)org.Scan0.ToPointer();
-            var desp = (byte*)des.Scan0.ToPointer();
-
-            for(int i = 0; i<height; ++i) {
-                int orgSd = i * org.Stride;
-                int desSd = i * des.Stride;
-                Peter.GrayViaParallelAndSIMD(orgp + orgSd, desp + desSd, width);
+        public static unsafe void Soonts_MultiplyHighDo(BitmapData src, BitmapData dst) {
+            if (!Sse41.IsSupported) throw new NotSupportedException("Not support X86's Sse41!");
+            int vectorWidth = Vector<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pRow = (byte*)src.Scan0.ToPointer();
+            byte* qRow = (byte*)dst.Scan0.ToPointer();
+            for (int i = 0; i < height; i++) {
+                Soonts.convertToGrayscale(pRow, qRow, width);
+                pRow += strideSrc;
+                qRow += strideDst;
             }
         }
-#endif // NETCOREAPP3_0_OR_GREATER
 
         /// <summary>
-        /// From Peter Cordes. https://stackoverflow.com/questions/77603639/why-simd-only-improves-performance-by-only-a-little-bit-for-rgb-to-grayscale-wi
+        /// From Soonts. https://stackoverflow.com/questions/58881359/how-to-convert-byte-array-of-image-pixels-data-to-grayscale-using-vector-sse-ope/
         /// </summary>
-        static class Peter {
-
-            public static unsafe void GrayViaParallel(BitmapData org, BitmapData des) {
-                int width = org.Width;
-                int height = org.Height;
-
-                var orgp = (byte*)org.Scan0.ToPointer();
-                var desp = (byte*)des.Scan0.ToPointer();
-
-                Parallel.For(0, height, i =>
-                {
-                    int orgSd = i * org.Stride;
-                    int desSd = i * des.Stride;
-                    for (int j = 0; j < width; j++) {
-                        //                              Red                     Green                  Blue
-                        desp[desSd] = (byte)((orgp[orgSd + 2] * 19595 + orgp[orgSd + 1] * 38469 + orgp[orgSd] * 7472) >> 16);
-                        desSd++;
-                        orgSd += 3;
-                    }
-                });
+        static class Soonts {
+            /// <summary>Load 4 pixels of RGB</summary>
+            static unsafe Vector128<int> load4(byte* src) {
+                return Sse2.LoadVector128((int*)src);
             }
 
-#if NETCOREAPP3_0_OR_GREATER
-            public static unsafe void GrayViaParallelAndSIMD(byte* src, byte* dst, int count) {
-                const ushort mulBlue = (ushort)(0.114 * 0x10000); const ushort mulGreen = (ushort)(0.587 * 0x10000); const ushort mulRed = (ushort)(0.299 * 0x10000);
-                var Coeleft = Vector128.Create(mulBlue, mulGreen, mulRed, mulBlue, mulGreen, mulRed, mulBlue, mulGreen);
-                var CoeRight = Vector128.Create(mulRed, mulBlue, mulGreen, mulRed, mulBlue, mulGreen, mulRed, 0);
-
-                int allPixels = count * 3;
-                byte* srcEnd = src + allPixels; //Is it wrong?
-                int stride = 15; //Proceed 15 bytes per step
-                int loopCount = (int)((srcEnd - src) / stride);
-
-                Parallel.For(0, loopCount, i =>
-                {
-                    int curPos = (i + 1) * stride;
-                    if (curPos < allPixels) //If not added,  it will exceed the image data
-                    {
-                        // Load the first 16 bytes of the pixels
-                        var _1st16bytes = Sse2.LoadVector128(src + i * stride);
-
-                        // Get the first 8 bytes
-                        var low = Sse2.UnpackLow(_1st16bytes, Vector128<byte>.Zero).AsUInt16();
-                        //Get the next 8 bytes
-                        var high = Sse2.UnpackHigh(_1st16bytes, Vector128<byte>.Zero).AsUInt16();
-
-                        // Calculate the first 8 bytes
-                        var lowMul = Sse2.MultiplyHigh(Coeleft, low);
-                        // Calculate the next 8 bytes
-                        var highMul = Sse2.MultiplyHigh(CoeRight, high);
-
-                        //               Blue                     Green                   Red
-                        var px1 = lowMul.GetElement(0) + lowMul.GetElement(1) + lowMul.GetElement(2);
-                        var px2 = lowMul.GetElement(3) + lowMul.GetElement(4) + lowMul.GetElement(5);
-                        var px3 = lowMul.GetElement(6) + lowMul.GetElement(7) + highMul.GetElement(0);
-                        var px4 = highMul.GetElement(1) + highMul.GetElement(2) + highMul.GetElement(3);
-                        var px5 = highMul.GetElement(4) + highMul.GetElement(5) + highMul.GetElement(6);
-
-                        //15 bytes for 5 pixels 
-                        var i5 = i * 5;
-
-                        dst[i5] = (byte)px1;
-                        dst[i5 + 1] = (byte)px2;
-                        dst[i5 + 2] = (byte)px3;
-                        dst[i5 + 3] = (byte)px4;
-                        dst[i5 + 4] = (byte)px5;
-                    }
-                });
+            /// <summary>Pack red channel of 8 pixels into ushort values in [ 0xFF00 .. 0 ] interval</summary>
+            static Vector128<ushort> packRed(Vector128<int> a, Vector128<int> b) {
+                Vector128<int> mask = Vector128.Create(0xFF);
+                a = Sse2.And(a, mask);
+                b = Sse2.And(b, mask);
+                return Sse2.ShiftLeftLogical128BitLane(Sse41.PackUnsignedSaturate(a, b), 1);
             }
+
+            /// <summary>Pack green channel of 8 pixels into ushort values in [ 0xFF00 .. 0 ] interval</summary>
+            static Vector128<ushort> packGreen(Vector128<int> a, Vector128<int> b) {
+                Vector128<int> mask = Vector128.Create(0xFF00);
+                a = Sse2.And(a, mask);
+                b = Sse2.And(b, mask);
+                return Sse41.PackUnsignedSaturate(a, b);
+            }
+
+            /// <summary>Pack blue channel of 8 pixels into ushort values in [ 0xFF00 .. 0 ] interval</summary>
+            static Vector128<ushort> packBlue(Vector128<int> a, Vector128<int> b) {
+                a = Sse2.ShiftRightLogical128BitLane(a, 1);
+                b = Sse2.ShiftRightLogical128BitLane(b, 1);
+                Vector128<int> mask = Vector128.Create(0xFF00);
+                a = Sse2.And(a, mask);
+                b = Sse2.And(b, mask);
+                return Sse41.PackUnsignedSaturate(a, b);
+            }
+
+            /// <summary>Load 8 pixels, split into RGB channels.</summary>
+            static unsafe void loadRgb(byte* src, out Vector128<ushort> red, out Vector128<ushort> green, out Vector128<ushort> blue) {
+                var a = load4(src);
+                var b = load4(src + 16);
+                red = packRed(a, b);
+                green = packGreen(a, b);
+                blue = packBlue(a, b);
+            }
+
+            const ushort mulRed = (ushort)(0.29891 * 0x10000);
+            const ushort mulGreen = (ushort)(0.58661 * 0x10000);
+            const ushort mulBlue = (ushort)(0.11448 * 0x10000);
+
+            /// <summary>Compute brightness of 8 pixels</summary>
+            static Vector128<short> brightness(Vector128<ushort> r, Vector128<ushort> g, Vector128<ushort> b) {
+                r = Sse2.MultiplyHigh(r, Vector128.Create(mulRed));
+                g = Sse2.MultiplyHigh(g, Vector128.Create(mulGreen));
+                b = Sse2.MultiplyHigh(b, Vector128.Create(mulBlue));
+                var result = Sse2.AddSaturate(Sse2.AddSaturate(r, g), b);
+                return Vector128.AsInt16(Sse2.ShiftRightLogical(result, 8));
+            }
+
+            /// <summary>Convert buffer from RGBA to grayscale.</summary>
+            /// <remarks>
+            /// <para>If your image has line paddings, you'll want to call this once per line, not for the complete image.</para>
+            /// <para>If width of the image is not multiple of 16 pixels, you'll need to do more work to handle the last few pixels of every line.</para>
+            /// </remarks>
+            public static unsafe void convertToGrayscale(byte* src, byte* dst, int count) {
+                byte* srcEnd = src + count * 4;
+                while (src < srcEnd) {
+                    loadRgb(src, out var r, out var g, out var b);
+                    var low = brightness(r, g, b);
+                    loadRgb(src + 32, out r, out g, out b);
+                    var hi = brightness(r, g, b);
+
+                    var bytes = Sse2.PackUnsignedSaturate(low, hi);
+                    Sse2.Store(dst, bytes);
+
+                    src += 64;
+                    dst += 16;
+                }
+            }
+        }
 #endif // NETCOREAPP3_0_OR_GREATER
 
+        // == From user555045. https://stackoverflow.com/questions/58881359/how-to-convert-byte-array-of-image-pixels-data-to-grayscale-using-vector-sse-ope/
+#if NETCOREAPP3_0_OR_GREATER
+
+        [Benchmark]
+        public void User555045_MultiplyAddAdjacent() {
+            User555045_MultiplyAddAdjacentDo(_sourceBitmapData, _destinationBitmapData);
         }
+
+        public static unsafe void User555045_MultiplyAddAdjacentDo(BitmapData src, BitmapData dst) {
+            if (!Ssse3.IsSupported) throw new NotSupportedException("Not support X86's Ssse3!");
+            int vectorWidth = Vector<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pRow = (byte*)src.Scan0.ToPointer();
+            byte* qRow = (byte*)dst.Scan0.ToPointer();
+            for (int i = 0; i < height; i++) {
+                User555045.convertToGrayscale(pRow, qRow, width);
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+        }
+
+        /// <summary>
+        /// From user555045. https://stackoverflow.com/questions/58881359/how-to-convert-byte-array-of-image-pixels-data-to-grayscale-using-vector-sse-ope/
+        /// </summary>
+        static class User555045 {
+            public static unsafe void convertToGrayscale(byte* src, byte* dst, int count) {
+                int countMain = count & -16;
+                byte* srcEnd = src + countMain * 4;
+                byte* srcRealEnd = src + count * 4;
+                byte* dstRealEnd = dst + count;
+                sbyte scaleR = (sbyte)(128 * 0.29891);
+                sbyte scaleG = (sbyte)(128 * 0.58661);
+                sbyte scaleB = (sbyte)(128 * 0.118);
+                Vector128<sbyte> scales = Vector128.Create(scaleR, scaleG, scaleB, 0, scaleR, scaleG, scaleB, 0, scaleR, scaleG, scaleB, 0, scaleR, scaleG, scaleB, 0);
+                Vector128<short> ones = Vector128.Create((short)1);
+                do {
+                    while (src < srcEnd) {
+                        var block0 = Sse2.LoadVector128(src);
+                        var block1 = Sse2.LoadVector128(src + 16);
+                        var block2 = Sse2.LoadVector128(src + 32);
+                        var block3 = Sse2.LoadVector128(src + 48);
+                        var scaled0 = Ssse3.MultiplyAddAdjacent(block0, scales);
+                        var scaled1 = Ssse3.MultiplyAddAdjacent(block1, scales);
+                        var scaled2 = Ssse3.MultiplyAddAdjacent(block2, scales);
+                        var scaled3 = Ssse3.MultiplyAddAdjacent(block3, scales);
+                        var t0 = Sse2.MultiplyAddAdjacent(scaled0, ones);
+                        var t1 = Sse2.MultiplyAddAdjacent(scaled1, ones);
+                        var t2 = Sse2.MultiplyAddAdjacent(scaled2, ones);
+                        var t3 = Sse2.MultiplyAddAdjacent(scaled3, ones);
+                        var c01 = Sse2.PackSignedSaturate(t0, t1);
+                        c01 = Sse2.ShiftRightLogical(c01, 7);
+                        var c23 = Sse2.PackSignedSaturate(t2, t3);
+                        c23 = Sse2.ShiftRightLogical(c23, 7);
+                        var c0123 = Sse2.PackUnsignedSaturate(c01, c23);
+                        Sse2.Store(dst, c0123);
+                        src += 64;
+                        dst += 16;
+                    }
+                    // hack to re-use the main loop for the "tail"
+                    if (src == srcRealEnd)
+                        break;
+                    srcEnd = srcRealEnd;
+                    src = srcRealEnd - 64;
+                    dst = dstRealEnd - 16;
+                } while (true);
+            }
+        }
+#endif // NETCOREAPP3_0_OR_GREATER
 
     }
 }
