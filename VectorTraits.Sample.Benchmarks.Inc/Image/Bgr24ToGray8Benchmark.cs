@@ -115,23 +115,29 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     long totalDifference, countByteDifference;
                     int maxDifference;
                     double averageDifference;
-                    long totalByte = Width * Height * 3;
-                    double percentageByteDifference;
+                    long totalByte = Width * Height;
+                    double percentDifference;
                     // Baseline
                     ScalarDo(_sourceBitmapData, _expectedBitmapData);
+                    // UseVectors
+                    UseVectors();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectors: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
                     // PeterParallelScalar
                     PeterParallelScalar();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
-                    percentageByteDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of PeterParallelScalar: {0}/{1}={2}, max={3}, percentage={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentageByteDifference));
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of PeterParallelScalar: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #if NETCOREAPP3_0_OR_GREATER
                     // PeterParallelScalar
                     PeterParallelSimd();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
-                    percentageByteDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of PeterParallelSimd: {0}/{1}={2}, max={3}, percentage={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentageByteDifference));
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of PeterParallelSimd: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #endif // NETCOREAPP3_0_OR_GREATER
                 } catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
@@ -209,6 +215,75 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     *q = (byte)((p[2] * mulRed + p[1] * mulGreen + p[0] * mulBlue) >> shiftPoint);
                     p += cbPixel; // Bgr24
                     q += 1; // Gray8
+                }
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+        }
+
+        [Benchmark]
+        public void UseVectors() {
+            UseVectorsDo(_sourceBitmapData, _destinationBitmapData);
+        }
+
+        public static unsafe void UseVectorsDo(BitmapData src, BitmapData dst) {
+            const int cbPixel = 3; // Bgr24
+            const int shiftPoint = 8;
+            const int mulPoint = 1 << shiftPoint; // 0x100
+            const ushort mulRed = (ushort)(0.299 * mulPoint); // 76
+            const ushort mulGreen = (ushort)(0.587 * mulPoint); // 150
+            const ushort mulBlue = mulPoint - mulRed - mulGreen; // 30
+            Vector<ushort> vmulRed = new Vector<ushort>(mulRed);
+            Vector<ushort> vmulGreen = new Vector<ushort>(mulGreen);
+            Vector<ushort> vmulBlue = new Vector<ushort>(mulBlue);
+            int vectorWidth = Vector<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst);
+                return;
+            }
+            int maxX = width - vectorWidth;
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pRow = (byte*)src.Scan0.ToPointer();
+            byte* qRow = (byte*)dst.Scan0.ToPointer();
+            for (int i = 0; i < height; i++) {
+                Vector<byte>* pLast = (Vector<byte>*)(pRow + maxX * cbPixel);
+                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * 1);
+                Vector<byte>* p = (Vector<byte>*)pRow;
+                Vector<byte>* q = (Vector<byte>*)qRow;
+                for (; ; ) {
+                    Vector<byte> r, g, b, gray;
+                    Vector<ushort> wr0, wr1, wg0, wg1, wb0, wb1;
+                    // Load.
+                    b = Vectors.YGroup3Unzip(p[0], p[1], p[2], out g, out r);
+                    // widen(r) * mulRed + widen(g) * mulGreen + widen(b) * mulBlue
+                    Vector.Widen(r, out wr0, out wr1);
+                    Vector.Widen(g, out wg0, out wg1);
+                    Vector.Widen(b, out wb0, out wb1);
+                    wr0 = Vectors.Multiply(wr0, vmulRed);
+                    wr1 = Vectors.Multiply(wr1, vmulRed);
+                    wg0 = Vectors.Multiply(wg0, vmulGreen);
+                    wg1 = Vectors.Multiply(wg1, vmulGreen);
+                    wb0 = Vectors.Multiply(wb0, vmulBlue);
+                    wb1 = Vectors.Multiply(wb1, vmulBlue);
+                    wr0 = Vector.Add(wr0, wg0);
+                    wr1 = Vector.Add(wr1, wg1);
+                    wr0 = Vector.Add(wr0, wb0);
+                    wr1 = Vector.Add(wr1, wb1);
+                    // Shift right and narrow.
+                    wr0 = Vectors.ShiftRightLogical_Const(wr0, shiftPoint);
+                    wr1 = Vectors.ShiftRightLogical_Const(wr1, shiftPoint);
+                    gray = Vector.Narrow(wr0, wr1);
+                    // Store.
+                    *q = gray;
+                    // Next.
+                    if (p >= pLast) break;
+                    p += cbPixel;
+                    ++q;
+                    if (p > pLast) p = pLast; // The last block is also use vector.
+                    if (q > qLast) q = qLast;
                 }
                 pRow += strideSrc;
                 qRow += strideDst;
