@@ -2,7 +2,7 @@
   "profiles": {
     "VectorTraits.Sample.Benchmarks": {
       "commandName": "Project",
-      "commandLineArgs": "-check"
+      "commandLineArgs": "-check0"
     }
   }
 }

@@ -136,6 +136,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
             var target = new SplitLanes4Double() { Count = 1000 };
             target.Setup();
             writer.WriteLine("Finish check.");
+            if (target is IDisposable disposable) {
+                disposable.Dispose();
+            }
         }
 
     }
