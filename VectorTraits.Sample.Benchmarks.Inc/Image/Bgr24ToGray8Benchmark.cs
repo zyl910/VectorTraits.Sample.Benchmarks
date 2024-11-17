@@ -153,7 +153,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         private unsafe long SumDifference(BitmapData expected, BitmapData dst, out long countByteDifference, out int maxDifference) {
-            const int cbPixel = 3;
+            const int cbPixel = 1; // Gray8
             long totalDifference = 0;
             countByteDifference = 0;
             maxDifference = 0;
