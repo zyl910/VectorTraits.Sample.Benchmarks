@@ -122,15 +122,46 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         internal unsafe void RandomFillBitmapData(BitmapData bitmapData, Random random) {
             if (null == bitmapData) return;
             if (IntPtr.Zero == bitmapData.Scan0) return;
-            byte* pline = (byte*)bitmapData.Scan0;
+            byte* pRow = (byte*)bitmapData.Scan0;
             for (int i = 0; i < bitmapData.Height; i++) {
-                byte* p = pline;
+                byte* p = pRow;
                 for (int j = 0; j < bitmapData.Stride; j++) {
                     *p++ = (byte)random.Next(0x100);
                 }
-                pline += bitmapData.Stride;
+                pRow += bitmapData.Stride;
             }
         }
+
+        [Benchmark(Baseline = true)]
+        public void Scalar() {
+            ScalarDo(_sourceBitmapData, _destinationBitmapData);
+        }
+
+        public static unsafe void ScalarDo(BitmapData src, BitmapData dst) {
+            const int shiftPoint = 16;
+            const int mulPoint = 1 << shiftPoint; // 0x10000
+            const int mulRed = (int)(0.299 * mulPoint); // 19595
+            const int mulGreen = (int)(0.587 * mulPoint); // 38469
+            const int mulBlue = mulPoint - mulRed - mulGreen; // 7472
+            int width = src.Width;
+            int height = src.Height;
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pRow = (byte*)src.Scan0.ToPointer();
+            byte* qRow = (byte*)dst.Scan0.ToPointer();
+            for (int i = 0; i < height; i++) {
+                byte* p = pRow;
+                byte* q = qRow;
+                for (int j = 0; j < width; j++) {
+                    *q = (byte)((p[2] * mulRed + p[1] * mulGreen + p[0] * mulBlue) >> shiftPoint);
+                    p += 3; // Bgr24
+                    q += 1; // Gray8
+                }
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+        }
+
 
         // == From Peter Cordes. https://stackoverflow.com/questions/77603639/why-simd-only-improves-performance-by-only-a-little-bit-for-rgb-to-grayscale-wi
 
@@ -163,7 +194,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         /// </summary>
         static class Peter {
 
-            internal static unsafe void GrayViaParallel(BitmapData org, BitmapData des) {
+            public static unsafe void GrayViaParallel(BitmapData org, BitmapData des) {
                 int width = org.Width;
                 int height = org.Height;
 
@@ -184,7 +215,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             }
 
 #if NETCOREAPP3_0_OR_GREATER
-            internal static unsafe void GrayViaParallelAndSIMD(byte* src, byte* dst, int count) {
+            public static unsafe void GrayViaParallelAndSIMD(byte* src, byte* dst, int count) {
                 const ushort mulBlue = (ushort)(0.114 * 0x10000); const ushort mulGreen = (ushort)(0.587 * 0x10000); const ushort mulRed = (ushort)(0.299 * 0x10000);
                 var Coeleft = Vector128.Create(mulBlue, mulGreen, mulRed, mulBlue, mulGreen, mulRed, mulBlue, mulGreen);
                 var CoeRight = Vector128.Create(mulRed, mulBlue, mulGreen, mulRed, mulBlue, mulGreen, mulRed, 0);
