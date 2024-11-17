@@ -14,6 +14,7 @@ using System.Runtime.Intrinsics;
 using System.Text;
 using Zyl.VectorTraits;
 using Zyl.VectorTraits.Sample.Benchmarks.Group;
+using Zyl.VectorTraits.Sample.Benchmarks.Image;
 
 namespace Zyl.VectorTraits.Sample.Benchmarks {
     /// <summary>
@@ -107,10 +108,10 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
                     onlyCheck = true;
                 }
             }
+            // Check.
+            DoCheck(writer);
             // Run.
-            if (onlyCheck) {
-                DoCheck(writer);
-            } else {
+            if (!onlyCheck) {
                 Architecture architecture = RuntimeInformation.OSArchitecture;
                 var config = DefaultConfig.Instance;
                 if (architecture == Architecture.X86 || architecture == Architecture.X64) {
@@ -133,7 +134,8 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
         /// </summary>
         /// <param name="writer">The TextWriter.</param>
         public static void DoCheck(TextWriter writer = null) {
-            var target = new SplitLanes4Double() { Count = 1000 };
+            //var target = new SplitLanes4Double() { Count = 1000 };
+            var target = new Bgr24ToGray8Benchmark() { Width = 1024 };
             target.Setup();
             writer.WriteLine("Finish check.");
             if (target is IDisposable disposable) {
