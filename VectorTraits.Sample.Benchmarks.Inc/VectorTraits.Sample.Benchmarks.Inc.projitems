@@ -11,11 +11,10 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BenchmarksGlobal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FakeBenchmarkAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Fake\System\Drawing\Imaging\BitmapData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Fake\System\Drawing\Imaging\PixelFormat.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Group\SplitLanes4Double.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\Bgr24ToGray8Benchmark.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SimpleBenchmark.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)Fake\System\Drawing\Imaging\" />
   </ItemGroup>
 </Project>
