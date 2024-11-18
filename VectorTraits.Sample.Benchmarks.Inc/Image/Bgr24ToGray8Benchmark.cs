@@ -226,6 +226,106 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             }
         }
 
+#if NETCOREAPP3_0_OR_GREATER
+
+        [Benchmark]
+        public void UseVector128s() {
+            UseVector128sDo(_sourceBitmapData, _destinationBitmapData, false);
+        }
+
+        //[Benchmark]
+        public void UseVector128sParallel() {
+            UseVector128sDo(_sourceBitmapData, _destinationBitmapData, true);
+        }
+
+        public static unsafe void UseVector128sDo(BitmapData src, BitmapData dst, bool useParallel = false) {
+            int vectorWidth = Vector128<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            int processorCount = Environment.ProcessorCount;
+            int batchSize = height / (processorCount * 2);
+            bool allowParallel = useParallel && (batchSize > 0) && (processorCount > 1);
+            if (allowParallel) {
+                int batchCount = (height + batchSize - 1) / batchSize; // ceil((double)length / batchSize)
+                Parallel.For(0, batchCount, i => {
+                    int start = batchSize * i;
+                    int len = batchSize;
+                    if (start + len > height) len = height - start;
+                    byte* pSrc2 = pSrc + start * strideSrc;
+                    byte* pDst2 = pDst + start * strideDst;
+                    UseVector128sDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
+                });
+            } else {
+                UseVector128sDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+            }
+        }
+
+        public static unsafe void UseVector128sDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
+            const int cbPixel = 3; // Bgr24
+            const int shiftPoint = 8;
+            const int mulPoint = 1 << shiftPoint; // 0x100
+            const ushort mulRed = (ushort)(0.299 * mulPoint); // 76
+            const ushort mulGreen = (ushort)(0.587 * mulPoint); // 150
+            const ushort mulBlue = mulPoint - mulRed - mulGreen; // 30
+            Vector128<ushort> vmulRed = Vector128.Create((ushort)mulRed);
+            Vector128<ushort> vmulGreen = Vector128.Create((ushort)mulGreen);
+            Vector128<ushort> vmulBlue = Vector128.Create((ushort)mulBlue);
+            int Vector128Width = Vector128<byte>.Count;
+            int maxX = width - Vector128Width;
+            byte* pRow = pSrc;
+            byte* qRow = pDst;
+            for (int i = 0; i < height; i++) {
+                Vector128<byte>* pLast = (Vector128<byte>*)(pRow + maxX * cbPixel);
+                Vector128<byte>* qLast = (Vector128<byte>*)(qRow + maxX * 1);
+                Vector128<byte>* p = (Vector128<byte>*)pRow;
+                Vector128<byte>* q = (Vector128<byte>*)qRow;
+                for (; ; ) {
+                    Vector128<byte> r, g, b, gray;
+                    Vector128<ushort> wr0, wr1, wg0, wg1, wb0, wb1;
+                    // Load.
+                    b = Vector128s.YGroup3Unzip(p[0], p[1], p[2], out g, out r);
+                    // widen(r) * mulRed + widen(g) * mulGreen + widen(b) * mulBlue
+                    Vector128s.Widen(r, out wr0, out wr1);
+                    Vector128s.Widen(g, out wg0, out wg1);
+                    Vector128s.Widen(b, out wb0, out wb1);
+                    wr0 = Vector128s.Multiply(wr0, vmulRed);
+                    wr1 = Vector128s.Multiply(wr1, vmulRed);
+                    wg0 = Vector128s.Multiply(wg0, vmulGreen);
+                    wg1 = Vector128s.Multiply(wg1, vmulGreen);
+                    wb0 = Vector128s.Multiply(wb0, vmulBlue);
+                    wb1 = Vector128s.Multiply(wb1, vmulBlue);
+                    wr0 = Vector128s.Add(wr0, wg0);
+                    wr1 = Vector128s.Add(wr1, wg1);
+                    wr0 = Vector128s.Add(wr0, wb0);
+                    wr1 = Vector128s.Add(wr1, wb1);
+                    // Shift right and narrow.
+                    wr0 = Vector128s.ShiftRightLogical_Const(wr0, shiftPoint);
+                    wr1 = Vector128s.ShiftRightLogical_Const(wr1, shiftPoint);
+                    gray = Vector128s.Narrow(wr0, wr1);
+                    // Store.
+                    *q = gray;
+                    // Next.
+                    if (p >= pLast) break;
+                    p += cbPixel;
+                    ++q;
+                    if (p > pLast) p = pLast; // The last block is also use vector.
+                    if (q > qLast) q = qLast;
+                }
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+        }
+
+#endif // NETCOREAPP3_0_OR_GREATER
+
         [Benchmark]
         public void UseVectors() {
             UseVectorsDo(_sourceBitmapData, _destinationBitmapData, false);
