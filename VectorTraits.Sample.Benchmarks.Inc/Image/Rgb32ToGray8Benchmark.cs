@@ -204,9 +204,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             const int cbPixel = 4; // Rgb32
             const int shiftPoint = 16;
             const int mulPoint = 1 << shiftPoint; // 0x10000
-            const int mulRed = (int)(0.299 * mulPoint); // 19595
-            const int mulGreen = (int)(0.587 * mulPoint); // 38469
-            const int mulBlue = mulPoint - mulRed - mulGreen; // 7472
+            const int mulRed = (int)(0.299 * mulPoint + 0.5); // 19595
+            const int mulGreen = (int)(0.587 * mulPoint + 0.5); // 38470
+            const int mulBlue = mulPoint - mulRed - mulGreen; // 7471
             int width = src.Width;
             int height = src.Height;
             int strideSrc = src.Stride;
@@ -270,9 +270,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             const int cbPixel = 4; // Rgb32
             const int shiftPoint = 8;
             const int mulPoint = 1 << shiftPoint; // 0x100
-            const ushort mulRed = (ushort)(0.299 * mulPoint); // 76
-            const ushort mulGreen = (ushort)(0.587 * mulPoint); // 150
-            const ushort mulBlue = mulPoint - mulRed - mulGreen; // 30
+            const ushort mulRed = (ushort)(0.299 * mulPoint + 0.5); // 77
+            const ushort mulGreen = (ushort)(0.587 * mulPoint + 0.5); // 150
+            const ushort mulBlue = mulPoint - mulRed - mulGreen; // 29
             Vector<ushort> vmulRed = new Vector<ushort>(mulRed);
             Vector<ushort> vmulGreen = new Vector<ushort>(mulGreen);
             Vector<ushort> vmulBlue = new Vector<ushort>(mulBlue);

@@ -1,4 +1,4 @@
-﻿#undef BENCHMARKS_OFF
+﻿//#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -26,9 +26,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 #endif // BENCHMARKS_OFF
 
     /// <summary>
-    /// Why SIMD only improves performance by only a little bit for RGB to Grayscale, with SIMD multiply but scalar add of vector elements? https://stackoverflow.com/questions/77603639/why-simd-only-improves-performance-by-only-a-little-bit-for-rgb-to-grayscale-wi
+    /// C++ to C# memory alignment issue https://stackoverflow.com/questions/79185374/c-to-c-sharp-memory-alignment-issue/
     /// </summary>
-    public class Bgr24ToGray8Benchmark : IDisposable {
+    public class Bgr24ToGrayBgr24Benchmark : IDisposable {
         private bool _disposed = false;
         private static readonly Random _random = new Random(1);
         private BitmapData _sourceBitmapData = null;
@@ -39,7 +39,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         public int Width { get; set; }
         public int Height { get; set; }
 
-        ~Bgr24ToGray8Benchmark() {
+        ~Bgr24ToGrayBgr24Benchmark() {
             Dispose(false);
         }
 
@@ -102,8 +102,8 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             // Create.
             Cleanup();
             _sourceBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
-            _destinationBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format8bppIndexed);
-            _expectedBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format8bppIndexed);
+            _destinationBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
+            _expectedBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
             RandomFillBitmapData(_sourceBitmapData, _random);
 
             // Check.
@@ -114,18 +114,10 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     long totalDifference, countByteDifference;
                     int maxDifference;
                     double averageDifference;
-                    long totalByte = Width * Height;
+                    long totalByte = Width * Height * 3;
                     double percentDifference;
                     // Baseline
                     ScalarDo(_sourceBitmapData, _expectedBitmapData);
-#if NETCOREAPP3_0_OR_GREATER
-                    // UseVector128s
-                    UseVector128s();
-                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
-                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
-                    percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of UseVector128s: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
-#endif // NETCOREAPP3_0_OR_GREATER
                     // UseVectors
                     UseVectors();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
@@ -138,31 +130,13 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVectorsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
-                    // UseVectorsX2
-                    UseVectorsX2();
-                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
-                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
-                    percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of UseVectorsX2: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
-                    // UseVectorsX2Parallel
-                    UseVectorsX2Parallel();
-                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
-                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
-                    percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of UseVectorsX2Parallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
-                    // PeterParallelScalar
-                    PeterParallelScalar();
-                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
-                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
-                    percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of PeterParallelScalar: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #if NETCOREAPP3_0_OR_GREATER
-                    // PeterParallelScalar
-                    PeterParallelSimd();
+                    // SoontsVector
+                    SoontsVector();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of PeterParallelSimd: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    writer.WriteLine(string.Format("Difference of SoontsVector: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #endif // NETCOREAPP3_0_OR_GREATER
                 } catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
@@ -184,10 +158,11 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         private unsafe long SumDifference(BitmapData expected, BitmapData dst, out long countByteDifference, out int maxDifference) {
-            const int cbPixel = 1; // Gray8
+            const int cbPixel = 3; // Bgr24 store grayscale.
             long totalDifference = 0;
             countByteDifference = 0;
             maxDifference = 0;
+            int maxPosX = -1, maxPosY = -1;
             int width = expected.Width;
             int height = expected.Height;
             int strideSrc = expected.Stride;
@@ -203,7 +178,11 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                         if (0 != difference) {
                             totalDifference += difference;
                             ++countByteDifference;
-                            if (maxDifference < difference) maxDifference = difference;
+                            if (maxDifference < difference) {
+                                maxDifference = difference;
+                                maxPosX = j;
+                                maxPosY = i;
+                            }
                         }
                         ++p;
                         ++q;
@@ -211,6 +190,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                 }
                 pRow += strideSrc;
                 qRow += strideDst;
+            }
+            if (maxDifference > 0) {
+                //Console.WriteLine(string.Format("SumDifference maxDifference={0}, at ({1}, {2})", maxDifference, maxPosX, maxPosY));
             }
             return totalDifference;
         }
@@ -237,114 +219,15 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                 byte* p = pRow;
                 byte* q = qRow;
                 for (int j = 0; j < width; j++) {
-                    *q = (byte)((p[2] * mulRed + p[1] * mulGreen + p[0] * mulBlue) >> shiftPoint);
+                    byte gray = (byte)((p[2] * mulRed + p[1] * mulGreen + p[0] * mulBlue) >> shiftPoint);
+                    q[0] = q[1] = q[2] = gray;
                     p += cbPixel; // Bgr24
-                    q += 1; // Gray8
+                    q += cbPixel; // Bgr24 store grayscale.
                 }
                 pRow += strideSrc;
                 qRow += strideDst;
             }
         }
-
-#if NETCOREAPP3_0_OR_GREATER
-
-        [Benchmark]
-        public void UseVector128s() {
-            UseVector128sDo(_sourceBitmapData, _destinationBitmapData, false);
-        }
-
-        //[Benchmark]
-        public void UseVector128sParallel() {
-            UseVector128sDo(_sourceBitmapData, _destinationBitmapData, true);
-        }
-
-        public static unsafe void UseVector128sDo(BitmapData src, BitmapData dst, bool useParallel = false) {
-            int vectorWidth = Vector128<byte>.Count;
-            int width = src.Width;
-            int height = src.Height;
-            if (width <= vectorWidth) {
-                ScalarDo(src, dst);
-                return;
-            }
-            int strideSrc = src.Stride;
-            int strideDst = dst.Stride;
-            byte* pSrc = (byte*)src.Scan0.ToPointer();
-            byte* pDst = (byte*)dst.Scan0.ToPointer();
-            int processorCount = Environment.ProcessorCount;
-            int batchSize = height / (processorCount * 2);
-            bool allowParallel = useParallel && (batchSize > 0) && (processorCount > 1);
-            if (allowParallel) {
-                int batchCount = (height + batchSize - 1) / batchSize; // ceil((double)length / batchSize)
-                Parallel.For(0, batchCount, i => {
-                    int start = batchSize * i;
-                    int len = batchSize;
-                    if (start + len > height) len = height - start;
-                    byte* pSrc2 = pSrc + start * strideSrc;
-                    byte* pDst2 = pDst + start * strideDst;
-                    UseVector128sDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
-                });
-            } else {
-                UseVector128sDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
-            }
-        }
-
-        public static unsafe void UseVector128sDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
-            const int cbPixel = 3; // Bgr24
-            const int shiftPoint = 8;
-            const int mulPoint = 1 << shiftPoint; // 0x100
-            const ushort mulRed = (ushort)(0.299 * mulPoint + 0.5); // 77
-            const ushort mulGreen = (ushort)(0.587 * mulPoint + 0.5); // 150
-            const ushort mulBlue = mulPoint - mulRed - mulGreen; // 29
-            Vector128<ushort> vmulRed = Vector128.Create((ushort)mulRed);
-            Vector128<ushort> vmulGreen = Vector128.Create((ushort)mulGreen);
-            Vector128<ushort> vmulBlue = Vector128.Create((ushort)mulBlue);
-            int Vector128Width = Vector128<byte>.Count;
-            int maxX = width - Vector128Width;
-            byte* pRow = pSrc;
-            byte* qRow = pDst;
-            for (int i = 0; i < height; i++) {
-                Vector128<byte>* pLast = (Vector128<byte>*)(pRow + maxX * cbPixel);
-                Vector128<byte>* qLast = (Vector128<byte>*)(qRow + maxX * 1);
-                Vector128<byte>* p = (Vector128<byte>*)pRow;
-                Vector128<byte>* q = (Vector128<byte>*)qRow;
-                for (; ; ) {
-                    Vector128<byte> r, g, b, gray;
-                    Vector128<ushort> wr0, wr1, wg0, wg1, wb0, wb1;
-                    // Load.
-                    b = Vector128s.YGroup3Unzip(p[0], p[1], p[2], out g, out r);
-                    // widen(r) * mulRed + widen(g) * mulGreen + widen(b) * mulBlue
-                    Vector128s.Widen(r, out wr0, out wr1);
-                    Vector128s.Widen(g, out wg0, out wg1);
-                    Vector128s.Widen(b, out wb0, out wb1);
-                    wr0 = Vector128s.Multiply(wr0, vmulRed);
-                    wr1 = Vector128s.Multiply(wr1, vmulRed);
-                    wg0 = Vector128s.Multiply(wg0, vmulGreen);
-                    wg1 = Vector128s.Multiply(wg1, vmulGreen);
-                    wb0 = Vector128s.Multiply(wb0, vmulBlue);
-                    wb1 = Vector128s.Multiply(wb1, vmulBlue);
-                    wr0 = Vector128s.Add(wr0, wg0);
-                    wr1 = Vector128s.Add(wr1, wg1);
-                    wr0 = Vector128s.Add(wr0, wb0);
-                    wr1 = Vector128s.Add(wr1, wb1);
-                    // Shift right and narrow.
-                    wr0 = Vector128s.ShiftRightLogical_Const(wr0, shiftPoint);
-                    wr1 = Vector128s.ShiftRightLogical_Const(wr1, shiftPoint);
-                    gray = Vector128s.Narrow(wr0, wr1);
-                    // Store.
-                    *q = gray;
-                    // Next.
-                    if (p >= pLast) break;
-                    p += cbPixel;
-                    ++q;
-                    if (p > pLast) p = pLast; // The last block is also use vector.
-                    if (q > qLast) q = qLast;
-                }
-                pRow += strideSrc;
-                qRow += strideDst;
-            }
-        }
-
-#endif // NETCOREAPP3_0_OR_GREATER
 
         [Benchmark]
         public void UseVectors() {
@@ -401,12 +284,12 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             byte* pRow = pSrc;
             byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
-                Vector<byte>* pLast = (Vector<byte>*)(pRow + maxX * cbPixel);
-                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * 1);
+                Vector<byte>* pLast = (Vector<byte>*)(pRow + maxX * cbPixel); // Bgr24
+                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * cbPixel); // Bgr24 store grayscale.
                 Vector<byte>* p = (Vector<byte>*)pRow;
                 Vector<byte>* q = (Vector<byte>*)qRow;
                 for (; ; ) {
-                    Vector<byte> r, g, b, gray;
+                    Vector<byte> r, g, b, gray, gray0, gray1, gray2;
                     Vector<ushort> wr0, wr1, wg0, wg1, wb0, wb1;
                     // Load.
                     b = Vectors.YGroup3Unzip(p[0], p[1], p[2], out g, out r);
@@ -429,11 +312,14 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     wr1 = Vectors.ShiftRightLogical_Const(wr1, shiftPoint);
                     gray = Vector.Narrow(wr0, wr1);
                     // Store.
-                    *q = gray;
+                    gray0 = Vectors.YGroup3Zip(gray, gray, gray, out gray1, out gray2);
+                    q[0] = gray0;
+                    q[1] = gray1;
+                    q[2] = gray2;
                     // Next.
                     if (p >= pLast) break;
                     p += cbPixel;
-                    ++q;
+                    q += cbPixel;
                     if (p > pLast) p = pLast; // The last block is also use vector.
                     if (q > qLast) q = qLast;
                 }
@@ -499,12 +385,12 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             byte* pRow = pSrc;
             byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
-                Vector<byte>* pLast = (Vector<byte>*)(pRow + maxX * cbPixel);
-                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * 1);
+                Vector<byte>* pLast = (Vector<byte>*)(pRow + maxX * cbPixel); // Bgr24
+                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * cbPixel); // Bgr24 store grayscale.
                 Vector<byte>* p = (Vector<byte>*)pRow;
                 Vector<byte>* q = (Vector<byte>*)qRow;
                 for (; ; ) {
-                    Vector<byte> r0, r1, g0, g1, b0, b1, gray0, gray1;
+                    Vector<byte> r0, r1, g0, g1, b0, b1, gray0, gray1, gray2, gray3, gray4, gray5;
                     Vector<ushort> wr0, wr1, wr2, wr3, wg0, wg1, wg2, wg3, wb0, wb1, wb2, wb3;
                     // Load.
                     b0 = Vectors.YGroup3UnzipX2(p[0], p[1], p[2], p[3], p[4], p[5], out b1, out g0, out g1, out r0, out r1);
@@ -543,12 +429,17 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     gray0 = Vector.Narrow(wr0, wr1);
                     gray1 = Vector.Narrow(wr2, wr3);
                     // Store.
+                    gray0 = Vectors.YGroup3ZipX2(gray0, gray1, gray0, gray1, gray0, gray1, out gray1, out gray2, out gray3, out gray4, out gray5);
                     q[0] = gray0;
                     q[1] = gray1;
+                    q[2] = gray2;
+                    q[3] = gray3;
+                    q[4] = gray4;
+                    q[5] = gray5;
                     // Next.
                     if (p >= pLast) break;
                     p += vectorInBlock * cbPixel;
-                    q += vectorInBlock;
+                    q += vectorInBlock * cbPixel;
                     if (p > pLast) p = pLast; // The last block is also use vector.
                     if (q > qLast) q = qLast;
                 }
@@ -557,111 +448,222 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             }
         }
 
-
-        // == From Peter Cordes. https://stackoverflow.com/questions/77603639/why-simd-only-improves-performance-by-only-a-little-bit-for-rgb-to-grayscale-wi
-
-        [Benchmark]
-        public void PeterParallelScalar() {
-            Peter.GrayViaParallel(_sourceBitmapData, _destinationBitmapData);
-        }
+        // == From Soonts. https://stackoverflow.com/questions/79185374/c-to-c-sharp-memory-alignment-issue/
 
 #if NETCOREAPP3_0_OR_GREATER
         [Benchmark]
-        public unsafe void PeterParallelSimd() {
-            if (!Sse2.IsSupported) throw new NotSupportedException("Not support X86's Sse2!");
-            var org = _sourceBitmapData;
-            var des = _destinationBitmapData;
-            int width = org.Width;
-            int height = org.Height;
+        public unsafe void SoontsVector() {
+            SoontsVectorDo(_sourceBitmapData, _destinationBitmapData);
+        }
 
-            var orgp = (byte*)org.Scan0.ToPointer();
-            var desp = (byte*)des.Scan0.ToPointer();
-
-            for(int i = 0; i<height; ++i) {
-                int orgSd = i * org.Stride;
-                int desSd = i * des.Stride;
-                Peter.GrayViaParallelAndSIMD(orgp + orgSd, desp + desSd, width);
+        public static unsafe void SoontsVectorDo(BitmapData src, BitmapData dst) {
+            if (!Ssse3.IsSupported) throw new NotSupportedException("Not support X86's Ssse3!");
+            if (!Avx2.IsSupported) throw new NotSupportedException("Not support X86's Avx2!");
+            int width = src.Width;
+            int height = src.Height;
+            int length = width * 3; // Bgr24.
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            for (int i = 0; i < height; ++i) {
+                Soonts.ConvertRgbToGrayscaleSIMDTo(pSrc, pDst, length);
+                pSrc += strideSrc;
+                pDst += strideDst;
             }
         }
-#endif // NETCOREAPP3_0_OR_GREATER
 
         /// <summary>
-        /// From Peter Cordes. https://stackoverflow.com/questions/77603639/why-simd-only-improves-performance-by-only-a-little-bit-for-rgb-to-grayscale-wi
+        /// From Soonts. https://stackoverflow.com/questions/79185374/c-to-c-sharp-memory-alignment-issue/
         /// </summary>
-        static class Peter {
+        static class Soonts {
+            // static const __m128i s_unpackTriplets = _mm_setr_epi8(
+            //     0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1 );
+            static readonly Vector128<byte> s_unpackTriplets = Vector128.Create((sbyte)0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1).AsByte();
+            static readonly Vector256<byte> s_unpackTriplets256 = Vector256.Create(s_unpackTriplets, s_unpackTriplets);
 
-            public static unsafe void GrayViaParallel(BitmapData org, BitmapData des) {
-                int width = org.Width;
-                int height = org.Height;
-
-                var orgp = (byte*)org.Scan0.ToPointer();
-                var desp = (byte*)des.Scan0.ToPointer();
-
-                Parallel.For(0, height, i =>
-                {
-                    int orgSd = i * org.Stride;
-                    int desSd = i * des.Stride;
-                    for (int j = 0; j < width; j++) {
-                        //                              Red                     Green                  Blue
-                        desp[desSd] = (byte)((orgp[orgSd + 2] * 19595 + orgp[orgSd + 1] * 38469 + orgp[orgSd] * 7472) >> 16);
-                        desSd++;
-                        orgSd += 3;
-                    }
-                });
+            // Load 24 bytes from memory, zero extending triplets from RGB into RGBA
+            // The alpha bytes will be zeros
+            // inline __m256i loadRgb8( const uint8_t* rsi )
+            // {
+            //     // Load 24 bytes into 2 SSE vectors, 16 and 8 bytes respectively
+            //     const __m128i low = _mm_loadu_si128( ( const __m128i* )rsi );
+            //     __m128i high = _mm_loadu_si64( rsi + 16 );
+            //     // Make the high vector contain exactly 4 triplets = 12 bytes
+            //     high = _mm_alignr_epi8( high, low, 12 );
+            //     // Combine into AVX2 vector
+            //     __m256i res = _mm256_setr_m128i( low, high );
+            //     // Hope the compiler inlines this function, and moves the vbroadcasti128 outside of the loop
+            //     const __m256i perm = _mm256_broadcastsi128_si256( s_unpackTriplets );
+            //     // Unpack RGB24 into RGB32
+            //     return _mm256_shuffle_epi8( res, perm );
+            // }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static unsafe Vector256<byte> loadRgb8(byte* rsi) {
+                // Load 24 bytes into 2 SSE vectors, 16 and 8 bytes respectively
+                Vector128<byte> low = *(Vector128<byte>*)rsi;
+                Vector128<byte> high = (*(Vector64<byte>*)(rsi + 16)).ToVector128();
+                // Make the high vector contain exactly 4 triplets = 12 bytes
+                high = Ssse3.AlignRight(high, low, 12);
+                // Combine into AVX2 vector
+                Vector256<byte> res = Vector256.Create(low, high);
+                // Use s_unpackTriplets256. // Hope the compiler inlines this function, and moves the vbroadcasti128 outside of the loop
+                Vector256<byte> perm = s_unpackTriplets256;
+                // Unpack RGB24 into RGB32
+                return Avx2.Shuffle(res, perm);
             }
 
-#if NETCOREAPP3_0_OR_GREATER
-            public static unsafe void GrayViaParallelAndSIMD(byte* src, byte* dst, int count) {
-                const ushort mulBlue = (ushort)(0.114 * 0x10000); const ushort mulGreen = (ushort)(0.587 * 0x10000); const ushort mulRed = (ushort)(0.299 * 0x10000);
-                var Coeleft = Vector128.Create(mulBlue, mulGreen, mulRed, mulBlue, mulGreen, mulRed, mulBlue, mulGreen);
-                var CoeRight = Vector128.Create(mulRed, mulBlue, mulGreen, mulRed, mulBlue, mulGreen, mulRed, 0);
+            // Greyscale coefficients approximated to integers: R = 0.3, G = 0.59, B = 0.11
+            // constexpr uint8_t coeffR = 77;  // 0.3 * 256 ≈ 77
+            // constexpr uint8_t coeffG = 150; // 0.59 * 256 ≈ 150
+            // constexpr uint8_t coeffB = 29;  // 0.11 * 256 ≈ 29
+            const byte coeffR = 77;  // 0.3 * 256 ≈ 77
+            const byte coeffG = 150; // 0.59 * 256 ≈ 150
+            const byte coeffB = 29;  // 0.11 * 256 ≈ 29
 
-                int allPixels = count * 3;
-                byte* srcEnd = src + allPixels; //Is it wrong?
-                int stride = 15; //Proceed 15 bytes per step
-                int loopCount = (int)((srcEnd - src) / stride);
+            // Compute vector of int32 lanes with r*coeffR + g*coeffG + b*coeffB
+            // inline __m256i makeGreyscale( __m256i rgba )
+            // {
+            //     const __m256i lowBytesMask = _mm256_set1_epi32( 0x00FF00FF );
+            //     __m256i rb = _mm256_and_si256( rgba, lowBytesMask );
+            //     __m256i g = _mm256_and_si256( _mm256_srli_epi16( rgba, 8 ), lowBytesMask );
+            // 
+            //     // Scale red and blue channels, then add pairwise into int32 lanes
+            //     constexpr int mulRbScalar = ( ( (int)coeffB ) << 16 ) | coeffR;
+            //     const __m256i mulRb = _mm256_set1_epi32( mulRbScalar );
+            //     rb = _mm256_madd_epi16( rb, mulRb );
+            // 
+            //     // Scale green channel
+            //     const __m256i mulGreen = _mm256_set1_epi32( coeffG );
+            //     g = _mm256_mullo_epi16( g, mulGreen );
+            // 
+            //     // Compute the result in 32-bit lanes
+            //     return _mm256_add_epi32( rb, g );
+            // }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Vector256<uint> makeGreyscaleBgr(Vector256<byte> rgba) {
+                Vector256<int> lowBytesMask = Vector256.Create(0x00FF00FF);
+                Vector256<int> rb = Avx2.And(rgba.AsInt32(), lowBytesMask);
+                Vector256<int> g = Avx2.And(Avx2.ShiftRightLogical(rgba.AsUInt16(), 8).AsInt32(), lowBytesMask);
 
-                Parallel.For(0, loopCount, i =>
-                {
-                    int curPos = (i + 1) * stride;
-                    if (curPos < allPixels) //If not added,  it will exceed the image data
-                    {
-                        // Load the first 16 bytes of the pixels
-                        var _1st16bytes = Sse2.LoadVector128(src + i * stride);
+                // Scale red and blue channels, then add pairwise into int32 lanes
+                const int mulRbScalar = (((int)coeffR) << 16) | coeffB; // This is BGR pixel, not RGB in the original code.
+                Vector256<int> mulRb = Vector256.Create(mulRbScalar);
+                rb = Avx2.MultiplyAddAdjacent(rb.AsInt16(), mulRb.AsInt16());
 
-                        // Get the first 8 bytes
-                        var low = Sse2.UnpackLow(_1st16bytes, Vector128<byte>.Zero).AsUInt16();
-                        //Get the next 8 bytes
-                        var high = Sse2.UnpackHigh(_1st16bytes, Vector128<byte>.Zero).AsUInt16();
+                // Scale green channel
+                Vector256<int> mulGreen = Vector256.Create((int)coeffG);
+                g = Avx2.MultiplyLow(g, mulGreen);
 
-                        // Calculate the first 8 bytes
-                        var lowMul = Sse2.MultiplyHigh(Coeleft, low);
-                        // Calculate the next 8 bytes
-                        var highMul = Sse2.MultiplyHigh(CoeRight, high);
-
-                        //               Blue                     Green                   Red
-                        var px1 = lowMul.GetElement(0) + lowMul.GetElement(1) + lowMul.GetElement(2);
-                        var px2 = lowMul.GetElement(3) + lowMul.GetElement(4) + lowMul.GetElement(5);
-                        var px3 = lowMul.GetElement(6) + lowMul.GetElement(7) + highMul.GetElement(0);
-                        var px4 = highMul.GetElement(1) + highMul.GetElement(2) + highMul.GetElement(3);
-                        var px5 = highMul.GetElement(4) + highMul.GetElement(5) + highMul.GetElement(6);
-
-                        //15 bytes for 5 pixels 
-                        var i5 = i * 5;
-
-                        dst[i5] = (byte)px1;
-                        dst[i5 + 1] = (byte)px2;
-                        dst[i5 + 2] = (byte)px3;
-                        dst[i5 + 3] = (byte)px4;
-                        dst[i5 + 4] = (byte)px5;
-                    }
-                });
+                // Compute the result in 32-bit lanes
+                return Avx2.Add(rb, g).AsUInt32();
             }
+
+            // static const __m256i s_packTriplets = _mm256_setr_epi8(
+            //     // Low half of the vector: e0 e0 e0 e1 e1 e1 e2 e2 e2 e3 e3 e3 0 0 0 0 
+            //     1, 1, 1, 5, 5, 5, 9, 9, 9, 13, 13, 13, -1, -1, -1, -1,
+            //     // High half of the vector: e1 e1 e2 e2 e2 e3 e3 e3 0 0 0 0 e0 e0 e0 e1 
+            //     5, 5, 9, 9, 9, 13, 13, 13, -1, -1, -1, -1, 1, 1, 1, 5 );
+            static readonly Vector256<byte> s_packTriplets = Vector256.Create(
+                 // Low half of the vector: e0 e0 e0 e1 e1 e1 e2 e2 e2 e3 e3 e3 0 0 0 0 
+                 1, 1, 1, 5, 5, 5, 9, 9, 9, 13, 13, 13, -1, -1, -1, -1,
+                 // High half of the vector: e1 e1 e2 e2 e2 e3 e3 e3 0 0 0 0 e0 e0 e0 e1 
+                 5, 5, 9, 9, 9, 13, 13, 13, -1, -1, -1, -1, 1, 1, 1, 5
+                ).AsByte();
+
+            // Extract second byte from each int32 lane, triplicate these bytes, and store 24 bytes to memory
+            // inline void storeRgb8( uint8_t* rdi, __m256i gs )
+            // {
+            //     // Move bytes within 16 byte lanes
+            //     gs = _mm256_shuffle_epi8( gs, s_packTriplets );
+            // 
+            //     // Split vector into halves
+            //     __m128i low = _mm256_castsi256_si128( gs );
+            //     const __m128i high = _mm256_extracti128_si256( gs, 1 );
+            //     // Insert high 4 bytes from high into low
+            //     low = _mm_blend_epi32( low, high, 0b1000 );
+            // 
+            //     // Store 24 RGB bytes
+            //     _mm_storeu_si128( ( __m128i* )rdi, low );
+            //     _mm_storeu_si64( rdi + 16, high );
+            // }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static unsafe void storeRgb8(byte* rdi, Vector256<byte> gs) {
+                // Move bytes within 16 byte lanes
+                gs = Avx2.Shuffle(gs, s_packTriplets);
+
+                // Split vector into halves
+                Vector128<byte> low = gs.GetLower();
+                Vector128<byte> high = gs.GetUpper();
+                // Insert high 4 bytes from high into low
+                low = Avx2.Blend(low.AsUInt32(), high.AsUInt32(), 0b1000).AsByte();
+
+                // Store 24 RGB bytes
+                *(Vector128<byte>*)rdi = low;
+                *(Vector64<byte>*)(rdi + 16) = high.GetLower();
+            }
+
+            // inline void computeGreyscale8( uint8_t* ptr )
+            // {
+            //     __m256i v = loadRgb8( ptr );
+            //     v = makeGreyscale( v );
+            //     storeRgb8( ptr, v );
+            // }
+            public static unsafe void computeGreyscale8To(byte* pSrc, byte* pDst) {
+                Vector256<byte> v = loadRgb8(pSrc);
+                v = makeGreyscaleBgr(v).AsByte();
+                storeRgb8(pDst, v);
+            }
+
+            // void ConvertRgbToGrayscaleSIMD( uint8_t* ptr, size_t length )
+            // {
+            //     const size_t rem = length % 24;
+            // 
+            //     uint8_t* const endAligned = ptr + ( length - rem );
+            //     for( ; ptr < endAligned; ptr += 24 )
+            //         computeGreyscale8( ptr );
+            // 
+            //     if( rem != 0 )
+            //     {
+            //         // An easy way to handle remainder is using a local buffer of 24 bytes, reusing the implementation
+            //         // Unlike memcpy / memset which are function calls and are subject to ABI conventions,
+            //         // __movsb / __stosb don't destroy data in vector registers
+            //         uint8_t remSpan[ 24 ];
+            //         __movsb( remSpan, ptr, rem );
+            //         __stosb( &remSpan[ rem ], 0, 24 - rem );
+            // 
+            //         computeGreyscale8( remSpan );
+            // 
+            //         __movsb( ptr, remSpan, rem );
+            //     }
+            // }
+            public static unsafe void ConvertRgbToGrayscaleSIMDTo(byte* pSrc, byte* pDst, int length) {
+                int rem = length % 24;
+
+                byte* endAligned = pSrc + (length - rem);
+                for (; pSrc < endAligned; pSrc += 24, pDst += 24) {
+                    computeGreyscale8To(pSrc, pDst);
+                }
+
+                if (rem != 0) {
+                    // An easy way to handle remainder is using a local buffer of 24 bytes
+                    const int spanSize = 24;
+                    Span<byte> remSpan = stackalloc byte[spanSize];
+                    remSpan.Clear(); // __stosb(&remSpan[rem], 0, 24 - rem);
+                    fixed (byte* pRem = remSpan) {
+                        Buffer.MemoryCopy(pSrc, pRem, spanSize, rem);
+                        
+                        computeGreyscale8To(pRem, pRem);
+
+                        Buffer.MemoryCopy(pRem, pDst, spanSize, rem);
+                    }
+                }
+            }
+        }
 #endif // NETCOREAPP3_0_OR_GREATER
 
-        }
-
     }
+
 }
 
 // == Benchmarks result

@@ -134,9 +134,13 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
         /// </summary>
         /// <param name="writer">The TextWriter.</param>
         public static void DoCheck(TextWriter writer = null) {
+            // - Group
             //var target = new SplitLanes4Double() { Count = 1000 };
+            // - Image
             var target = new Bgr24ToGray8Benchmark() { Width = 1024 };
+            //var target = new Bgr24ToGrayBgr24Benchmark() { Width = 1024 };
             //var target = new Rgb32ToGray8Benchmark() { Width = 1024 };
+            // - Run
             target.Setup();
             writer.WriteLine("Finish check.");
             if (target is IDisposable disposable) {

@@ -15,6 +15,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Fake\System\Drawing\Imaging\PixelFormat.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Group\SplitLanes4Double.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\Bgr24ToGray8Benchmark.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Image\Bgr24ToGrayBgr24Benchmark.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\Rgb32ToGray8Benchmark.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SimpleBenchmark.cs" />
   </ItemGroup>
