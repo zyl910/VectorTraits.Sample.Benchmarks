@@ -118,6 +118,14 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     double percentDifference;
                     // Baseline
                     ScalarDo(_sourceBitmapData, _expectedBitmapData);
+#if NETCOREAPP3_0_OR_GREATER
+                    // UseVector128s
+                    UseVector128s();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVector128s: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+#endif // NETCOREAPP3_0_OR_GREATER
                     // UseVectors
                     UseVectors();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
@@ -130,6 +138,18 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVectorsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsX2
+                    UseVectorsX2();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsX2: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsX2Parallel
+                    UseVectorsX2Parallel();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsX2Parallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
                     // PeterParallelScalar
                     PeterParallelScalar();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
@@ -414,6 +434,121 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     if (p >= pLast) break;
                     p += cbPixel;
                     ++q;
+                    if (p > pLast) p = pLast; // The last block is also use vector.
+                    if (q > qLast) q = qLast;
+                }
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+        }
+
+        [Benchmark]
+        public void UseVectorsX2() {
+            UseVectorsX2Do(_sourceBitmapData, _destinationBitmapData, false);
+        }
+
+        [Benchmark]
+        public void UseVectorsX2Parallel() {
+            UseVectorsX2Do(_sourceBitmapData, _destinationBitmapData, true);
+        }
+
+        public static unsafe void UseVectorsX2Do(BitmapData src, BitmapData dst, bool useParallel = false) {
+            int vectorWidth = Vector<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth * 2) {
+                UseVectorsDo(src, dst);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            int processorCount = Environment.ProcessorCount;
+            int batchSize = height / (processorCount * 2);
+            bool allowParallel = useParallel && (batchSize > 0) && (processorCount > 1);
+            if (allowParallel) {
+                int batchCount = (height + batchSize - 1) / batchSize; // ceil((double)length / batchSize)
+                Parallel.For(0, batchCount, i => {
+                    int start = batchSize * i;
+                    int len = batchSize;
+                    if (start + len > height) len = height - start;
+                    byte* pSrc2 = pSrc + start * strideSrc;
+                    byte* pDst2 = pDst + start * strideDst;
+                    UseVectorsX2DoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
+                });
+            } else {
+                UseVectorsX2DoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+            }
+        }
+
+        public static unsafe void UseVectorsX2DoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
+            const int vectorInBlock = 2;
+            const int cbPixel = 3; // Bgr24
+            const int shiftPoint = 8;
+            const int mulPoint = 1 << shiftPoint; // 0x100
+            const ushort mulRed = (ushort)(0.299 * mulPoint); // 76
+            const ushort mulGreen = (ushort)(0.587 * mulPoint); // 150
+            const ushort mulBlue = mulPoint - mulRed - mulGreen; // 30
+            Vector<ushort> vmulRed = new Vector<ushort>(mulRed);
+            Vector<ushort> vmulGreen = new Vector<ushort>(mulGreen);
+            Vector<ushort> vmulBlue = new Vector<ushort>(mulBlue);
+            int vectorWidth = Vector<byte>.Count;
+            int blockWidth = vectorWidth * vectorInBlock;
+            int maxX = width - blockWidth;
+            byte* pRow = pSrc;
+            byte* qRow = pDst;
+            for (int i = 0; i < height; i++) {
+                Vector<byte>* pLast = (Vector<byte>*)(pRow + maxX * cbPixel);
+                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * 1);
+                Vector<byte>* p = (Vector<byte>*)pRow;
+                Vector<byte>* q = (Vector<byte>*)qRow;
+                for (; ; ) {
+                    Vector<byte> r0, r1, g0, g1, b0, b1, gray0, gray1;
+                    Vector<ushort> wr0, wr1, wr2, wr3, wg0, wg1, wg2, wg3, wb0, wb1, wb2, wb3;
+                    // Load.
+                    b0 = Vectors.YGroup3UnzipX2(p[0], p[1], p[2], p[3], p[4], p[5], out b1, out g0, out g1, out r0, out r1);
+                    // widen(r) * mulRed + widen(g) * mulGreen + widen(b) * mulBlue
+                    Vector.Widen(r0, out wr0, out wr1);
+                    Vector.Widen(r1, out wr2, out wr3);
+                    Vector.Widen(g0, out wg0, out wg1);
+                    Vector.Widen(g1, out wg2, out wg3);
+                    Vector.Widen(b0, out wb0, out wb1);
+                    Vector.Widen(b1, out wb2, out wb3);
+                    wr0 = Vectors.Multiply(wr0, vmulRed);
+                    wr1 = Vectors.Multiply(wr1, vmulRed);
+                    wr2 = Vectors.Multiply(wr2, vmulRed);
+                    wr3 = Vectors.Multiply(wr3, vmulRed);
+                    wg0 = Vectors.Multiply(wg0, vmulGreen);
+                    wg1 = Vectors.Multiply(wg1, vmulGreen);
+                    wg2 = Vectors.Multiply(wg2, vmulGreen);
+                    wg3 = Vectors.Multiply(wg3, vmulGreen);
+                    wb0 = Vectors.Multiply(wb0, vmulBlue);
+                    wb1 = Vectors.Multiply(wb1, vmulBlue);
+                    wb2 = Vectors.Multiply(wb2, vmulBlue);
+                    wb3 = Vectors.Multiply(wb3, vmulBlue);
+                    wr0 = Vector.Add(wr0, wg0);
+                    wr1 = Vector.Add(wr1, wg1);
+                    wr2 = Vector.Add(wr2, wg2);
+                    wr3 = Vector.Add(wr3, wg3);
+                    wr0 = Vector.Add(wr0, wb0);
+                    wr1 = Vector.Add(wr1, wb1);
+                    wr2 = Vector.Add(wr2, wb2);
+                    wr3 = Vector.Add(wr3, wb3);
+                    // Shift right and narrow.
+                    wr0 = Vectors.ShiftRightLogical_Const(wr0, shiftPoint);
+                    wr1 = Vectors.ShiftRightLogical_Const(wr1, shiftPoint);
+                    wr2 = Vectors.ShiftRightLogical_Const(wr2, shiftPoint);
+                    wr3 = Vectors.ShiftRightLogical_Const(wr3, shiftPoint);
+                    gray0 = Vector.Narrow(wr0, wr1);
+                    gray1 = Vector.Narrow(wr2, wr3);
+                    // Store.
+                    q[0] = gray0;
+                    q[1] = gray1;
+                    // Next.
+                    if (p >= pLast) break;
+                    p += vectorInBlock * cbPixel;
+                    q += vectorInBlock;
                     if (p > pLast) p = pLast; // The last block is also use vector.
                     if (q > qLast) q = qLast;
                 }
