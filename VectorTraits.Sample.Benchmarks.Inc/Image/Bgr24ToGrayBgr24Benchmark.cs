@@ -130,6 +130,18 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVectorsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsX2
+                    UseVectorsX2();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsX2: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsX2Parallel
+                    UseVectorsX2Parallel();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsX2Parallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #if NETCOREAPP3_0_OR_GREATER
                     // SoontsVector
                     SoontsVector();
@@ -142,6 +154,15 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     Debug.WriteLine(ex.ToString());
                 }
             }
+            // Debug break.
+            //bool allowDebugBreak = false;
+            //if (allowDebugBreak) {
+            //    for (int i = 0; i < 10000; ++i) {
+            //        UseVectors();
+            //    }
+            //    Debugger.Break();
+            //    UseVectors();
+            //}
         }
 
         internal unsafe void RandomFillBitmapData(BitmapData bitmapData, Random random) {

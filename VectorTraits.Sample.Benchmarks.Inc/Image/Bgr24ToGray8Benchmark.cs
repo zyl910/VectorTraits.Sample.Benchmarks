@@ -168,6 +168,15 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     Debug.WriteLine(ex.ToString());
                 }
             }
+            // Debug break.
+            //bool allowDebugBreak = true;
+            //if (allowDebugBreak) {
+            //    for (int i = 0; i < 10000; ++i) {
+            //        UseVectors();
+            //    }
+            //    Debugger.Break();
+            //    UseVectors();
+            //}
         }
 
         internal unsafe void RandomFillBitmapData(BitmapData bitmapData, Random random) {
