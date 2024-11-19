@@ -208,7 +208,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                 byte* q = qRow;
                 for (int j = 0; j < width; j++) {
                     for (int k = 0; k < cbPixel; ++k) {
-                        int difference = Math.Abs((int)(q[k]) - p[k]);
+                        int difference = Math.Abs((int)(*q) - *p);
                         if (0 != difference) {
                             totalDifference += difference;
                             ++countByteDifference;
