@@ -674,3 +674,107 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 }
 
 // == Benchmarks result
+
+// -- `.NET8.0` on Arm
+// BenchmarkDotNet v0.14.0, macOS Sequoia 15.0.1 (24A348) [Darwin 24.0.0]
+// Apple M2, 1 CPU, 8 logical and 8 physical cores
+// .NET SDK 8.0.204
+//   [Host]     : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD [AttachedDebugger]
+//   DefaultJob : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+// 
+// 
+// | Method               | Width | Mean         | Error     | StdDev    | Ratio | RatioSD |
+// |--------------------- |------ |-------------:|----------:|----------:|------:|--------:|
+// | Scalar               | 1024  |    635.31 us |  0.537 us |  0.448 us |  1.00 |    0.00 |
+// | UseVector128s        | 1024  |    126.59 us |  0.492 us |  0.437 us |  0.20 |    0.00 |
+// | UseVectors           | 1024  |    127.04 us |  0.567 us |  0.474 us |  0.20 |    0.00 |
+// | UseVectorsParallel   | 1024  |     46.37 us |  0.336 us |  0.314 us |  0.07 |    0.00 |
+// | UseVectorsX2         | 1024  |    126.82 us |  0.094 us |  0.088 us |  0.20 |    0.00 |
+// | UseVectorsX2Parallel | 1024  |     41.59 us |  0.641 us |  0.600 us |  0.07 |    0.00 |
+// | PeterParallelScalar  | 1024  |    202.19 us |  1.025 us |  0.959 us |  0.32 |    0.00 |
+// | PeterParallelSimd    | 1024  |           NA |        NA |        NA |     ? |       ? |
+// |                      |       |              |           |           |       |         |
+// | Scalar               | 2048  |  2,625.64 us |  1.795 us |  1.402 us |  1.00 |    0.00 |
+// | UseVector128s        | 2048  |    519.49 us |  0.218 us |  0.204 us |  0.20 |    0.00 |
+// | UseVectors           | 2048  |    521.40 us |  0.301 us |  0.282 us |  0.20 |    0.00 |
+// | UseVectorsParallel   | 2048  |    152.11 us |  3.548 us | 10.064 us |  0.06 |    0.00 |
+// | UseVectorsX2         | 2048  |    516.46 us |  0.606 us |  0.567 us |  0.20 |    0.00 |
+// | UseVectorsX2Parallel | 2048  |    179.65 us |  6.579 us | 19.400 us |  0.07 |    0.01 |
+// | PeterParallelScalar  | 2048  |    711.00 us |  1.806 us |  1.601 us |  0.27 |    0.00 |
+// | PeterParallelSimd    | 2048  |           NA |        NA |        NA |     ? |       ? |
+// |                      |       |              |           |           |       |         |
+// | Scalar               | 4096  | 10,457.09 us |  5.697 us |  5.051 us |  1.00 |    0.00 |
+// | UseVector128s        | 4096  |  2,052.41 us |  0.819 us |  0.766 us |  0.20 |    0.00 |
+// | UseVectors           | 4096  |  2,058.16 us |  4.110 us |  3.643 us |  0.20 |    0.00 |
+// | UseVectorsParallel   | 4096  |  1,152.15 us | 21.134 us | 21.703 us |  0.11 |    0.00 |
+// | UseVectorsX2         | 4096  |  2,056.25 us |  1.088 us |  0.965 us |  0.20 |    0.00 |
+// | UseVectorsX2Parallel | 4096  |  1,125.10 us | 17.040 us | 15.939 us |  0.11 |    0.00 |
+// | PeterParallelScalar  | 4096  |  2,897.94 us | 56.893 us | 91.871 us |  0.28 |    0.01 |
+// | PeterParallelSimd    | 4096  |           NA |        NA |        NA |     ? |       ? |
+
+// -- `.NET8.0` on X86
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4460/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+// .NET SDK 8.0.403
+//   [Host]     : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+//   DefaultJob : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+// 
+// 
+// | Method               | Width | Mean         | Error      | StdDev     | Ratio | RatioSD | Code Size |
+// |--------------------- |------ |-------------:|-----------:|-----------:|------:|--------:|----------:|
+// | Scalar               | 1024  |  1,028.55 us |  12.545 us |  11.735 us |  1.00 |    0.02 |     152 B |
+// | UseVector128s        | 1024  |    166.12 us |   2.210 us |   2.067 us |  0.16 |    0.00 |        NA |
+// | UseVectors           | 1024  |     94.06 us |   0.606 us |   0.537 us |  0.09 |    0.00 |        NA |
+// | UseVectorsParallel   | 1024  |     24.98 us |   0.390 us |   0.365 us |  0.02 |    0.00 |        NA |
+// | UseVectorsX2         | 1024  |     87.89 us |   1.085 us |   0.962 us |  0.09 |    0.00 |        NA |
+// | UseVectorsX2Parallel | 1024  |     25.40 us |   0.188 us |   0.167 us |  0.02 |    0.00 |        NA |
+// | PeterParallelScalar  | 1024  |    216.47 us |   1.719 us |   1.524 us |  0.21 |    0.00 |        NA |
+// | PeterParallelSimd    | 1024  |  4,779.36 us |  42.416 us |  39.676 us |  4.65 |    0.06 |   5,308 B |
+// |                      |       |              |            |            |       |         |           |
+// | Scalar               | 2048  |  4,092.26 us |  21.098 us |  18.703 us |  1.00 |    0.01 |     152 B |
+// | UseVector128s        | 2048  |    695.64 us |   8.432 us |   7.474 us |  0.17 |    0.00 |        NA |
+// | UseVectors           | 2048  |    507.70 us |   9.626 us |  11.459 us |  0.12 |    0.00 |        NA |
+// | UseVectorsParallel   | 2048  |    118.98 us |   1.025 us |   0.959 us |  0.03 |    0.00 |        NA |
+// | UseVectorsX2         | 2048  |    490.85 us |   7.965 us |   7.450 us |  0.12 |    0.00 |        NA |
+// | UseVectorsX2Parallel | 2048  |    121.17 us |   2.349 us |   2.307 us |  0.03 |    0.00 |        NA |
+// | PeterParallelScalar  | 2048  |    803.30 us |   9.226 us |   8.630 us |  0.20 |    0.00 |        NA |
+// | PeterParallelSimd    | 2048  | 13,209.97 us | 234.335 us | 219.197 us |  3.23 |    0.05 |   5,258 B |
+// |                      |       |              |            |            |       |         |           |
+// | Scalar               | 4096  | 16,391.12 us | 121.643 us | 113.785 us |  1.00 |    0.01 |     152 B |
+// | UseVector128s        | 4096  |  2,925.29 us |  40.207 us |  35.642 us |  0.18 |    0.00 |        NA |
+// | UseVectors           | 4096  |  2,472.16 us |  32.452 us |  30.356 us |  0.15 |    0.00 |        NA |
+// | UseVectorsParallel   | 4096  |  2,034.85 us |  33.074 us |  30.937 us |  0.12 |    0.00 |        NA |
+// | UseVectorsX2         | 4096  |  2,444.99 us |  41.991 us |  48.356 us |  0.15 |    0.00 |        NA |
+// | UseVectorsX2Parallel | 4096  |  1,949.73 us |  23.640 us |  22.112 us |  0.12 |    0.00 |        NA |
+// | PeterParallelScalar  | 4096  |  3,139.85 us |  32.657 us |  27.270 us |  0.19 |    0.00 |        NA |
+// | PeterParallelSimd    | 4096  | 31,850.99 us | 272.007 us | 254.435 us |  1.94 |    0.02 |   5,267 B |
+
+// -- `.NET Framework` on X86
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4460/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+//   [Host]     : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+//   DefaultJob : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+// 
+// 
+// | Method               | Width | Mean        | Error     | StdDev    | Ratio | RatioSD | Code Size |
+// |--------------------- |------ |------------:|----------:|----------:|------:|--------:|----------:|
+// | Scalar               | 1024  |  1,022.4 us |  17.70 us |  18.18 us |  1.00 |    0.02 |     166 B |
+// | UseVectors           | 1024  |  1,630.0 us |   9.99 us |   9.34 us |  1.59 |    0.03 |   5,655 B |
+// | UseVectorsParallel   | 1024  |    293.7 us |   4.63 us |   4.33 us |  0.29 |    0.01 |   5,658 B |
+// | UseVectorsX2         | 1024  |  1,114.6 us |  21.87 us |  22.46 us |  1.09 |    0.03 |   8,827 B |
+// | UseVectorsX2Parallel | 1024  |    209.9 us |   4.19 us |   5.88 us |  0.21 |    0.01 |   8,830 B |
+// | PeterParallelScalar  | 1024  |    215.1 us |   1.11 us |   1.04 us |  0.21 |    0.00 |   2,428 B |
+// |                      |       |             |           |           |       |         |           |
+// | Scalar               | 2048  |  4,079.4 us |  61.81 us |  57.82 us |  1.00 |    0.02 |     166 B |
+// | UseVectors           | 2048  |  6,604.3 us |  48.58 us |  45.44 us |  1.62 |    0.02 |   5,655 B |
+// | UseVectorsParallel   | 2048  |  1,040.5 us |  19.53 us |  20.90 us |  0.26 |    0.01 |   5,658 B |
+// | UseVectorsX2         | 2048  |  4,072.7 us |  28.73 us |  26.87 us |  1.00 |    0.02 |        NA |
+// | UseVectorsX2Parallel | 2048  |    698.3 us |  12.45 us |  11.64 us |  0.17 |    0.00 |   8,830 B |
+// | PeterParallelScalar  | 2048  |    765.1 us |   5.17 us |   4.84 us |  0.19 |    0.00 |   2,428 B |
+// |                      |       |             |           |           |       |         |           |
+// | Scalar               | 4096  | 16,368.5 us | 106.80 us |  99.90 us |  1.00 |    0.01 |     166 B |
+// | UseVectors           | 4096  | 26,111.8 us | 140.54 us | 131.46 us |  1.60 |    0.01 |   5,655 B |
+// | UseVectorsParallel   | 4096  |  4,230.2 us |  82.56 us | 123.57 us |  0.26 |    0.01 |   5,658 B |
+// | UseVectorsX2         | 4096  | 18,262.6 us | 175.37 us | 164.04 us |  1.12 |    0.01 |   8,827 B |
+// | UseVectorsX2Parallel | 4096  |  2,920.3 us |  56.40 us |  79.06 us |  0.18 |    0.00 |   8,830 B |
+// | PeterParallelScalar  | 4096  |  2,950.5 us |  18.40 us |  15.37 us |  0.18 |    0.00 |   2,428 B |
