@@ -746,3 +746,110 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 }
 
 // == Benchmarks result
+
+// -- `.NET8.0` on Arm
+// BenchmarkDotNet v0.14.0, macOS Sequoia 15.0.1 (24A348) [Darwin 24.0.0]
+// Apple M2, 1 CPU, 8 logical and 8 physical cores
+// .NET SDK 8.0.204
+//   [Host]     : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+//   DefaultJob : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+// 
+// 
+// | Method               | Width | Mean         | Error      | StdDev     | Median       | Ratio | RatioSD |
+// |--------------------- |------ |-------------:|-----------:|-----------:|-------------:|------:|--------:|
+// | Scalar               | 1024  |    719.32 us |   0.215 us |   0.201 us |    719.34 us |  1.00 |    0.00 |
+// | ScalarParallel       | 1024  |    157.38 us |   1.423 us |   1.111 us |    157.25 us |  0.22 |    0.00 |
+// | UseVectors           | 1024  |    169.25 us |   0.538 us |   0.503 us |    169.40 us |  0.24 |    0.00 |
+// | UseVectorsParallel   | 1024  |     57.81 us |   0.998 us |   2.149 us |     58.11 us |  0.08 |    0.00 |
+// | UseVectorsParallel2  | 1024  |     71.15 us |   0.575 us |   0.639 us |     71.05 us |  0.10 |    0.00 |
+// | UseVectorsX2         | 1024  |    183.74 us |   1.046 us |   0.927 us |    183.39 us |  0.26 |    0.00 |
+// | UseVectorsX2Parallel | 1024  |     60.60 us |   1.199 us |   1.902 us |     60.03 us |  0.08 |    0.00 |
+// | SoontsVector         | 1024  |           NA |         NA |         NA |           NA |     ? |       ? |
+// |                      |       |              |            |            |              |       |         |
+// | Scalar               | 2048  |  2,963.48 us |   6.674 us |   5.211 us |  2,961.39 us |  1.00 |    0.00 |
+// | ScalarParallel       | 2048  |    627.47 us |  11.680 us |  25.142 us |    616.63 us |  0.21 |    0.01 |
+// | UseVectors           | 2048  |    716.27 us |   2.097 us |   1.961 us |    717.02 us |  0.24 |    0.00 |
+// | UseVectorsParallel   | 2048  |    368.49 us |   7.320 us |  21.469 us |    378.95 us |  0.12 |    0.01 |
+// | UseVectorsParallel2  | 2048  |    397.41 us |   3.373 us |   5.252 us |    396.97 us |  0.13 |    0.00 |
+// | UseVectorsX2         | 2048  |    758.99 us |   2.281 us |   2.133 us |    759.22 us |  0.26 |    0.00 |
+// | UseVectorsX2Parallel | 2048  |    351.37 us |   6.756 us |   7.509 us |    354.25 us |  0.12 |    0.00 |
+// | SoontsVector         | 2048  |           NA |         NA |         NA |           NA |     ? |       ? |
+// |                      |       |              |            |            |              |       |         |
+// | Scalar               | 4096  | 12,449.32 us | 177.868 us | 157.676 us | 12,508.13 us |  1.00 |    0.02 |
+// | ScalarParallel       | 4096  |  2,510.22 us |  34.541 us |  30.620 us |  2,501.37 us |  0.20 |    0.00 |
+// | UseVectors           | 4096  |  2,968.72 us |  20.503 us |  18.175 us |  2,965.71 us |  0.24 |    0.00 |
+// | UseVectorsParallel   | 4096  |  1,728.46 us |   4.362 us |   4.080 us |  1,729.00 us |  0.14 |    0.00 |
+// | UseVectorsParallel2  | 4096  |  1,769.06 us |  13.280 us |  11.090 us |  1,766.84 us |  0.14 |    0.00 |
+// | UseVectorsX2         | 4096  |  3,057.69 us |  23.689 us |  22.159 us |  3,063.90 us |  0.25 |    0.00 |
+// | UseVectorsX2Parallel | 4096  |  1,730.11 us |   3.373 us |   2.990 us |  1,729.84 us |  0.14 |    0.00 |
+// | SoontsVector         | 4096  |           NA |         NA |         NA |           NA |     ? |       ? |
+
+// -- `.NET8.0` on X86
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4460/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+// .NET SDK 8.0.403
+//   [Host]     : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+//   DefaultJob : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+// 
+// 
+// | Method               | Width | Mean         | Error      | StdDev     | Ratio |
+// |--------------------- |------ |-------------:|-----------:|-----------:|------:|
+// | Scalar               | 1024  |  1,128.81 us |   4.436 us |   3.932 us |  1.00 |
+// | ScalarParallel       | 1024  |    157.96 us |   1.007 us |   0.942 us |  0.14 |
+// | UseVectors           | 1024  |    123.79 us |   1.144 us |   1.014 us |  0.11 |
+// | UseVectorsParallel   | 1024  |     26.05 us |   0.503 us |   0.471 us |  0.02 |
+// | UseVectorsParallel2  | 1024  |     27.59 us |   0.313 us |   0.278 us |  0.02 |
+// | UseVectorsX2         | 1024  |    113.03 us |   0.751 us |   0.702 us |  0.10 |
+// | UseVectorsX2Parallel | 1024  |     23.95 us |   0.479 us |   0.448 us |  0.02 |
+// | SoontsVector         | 1024  |  1,412.87 us |   4.399 us |   3.673 us |  1.25 |
+// |                      |       |              |            |            |       |
+// | Scalar               | 2048  |  4,279.99 us |  37.658 us |  35.226 us |  1.00 |
+// | ScalarParallel       | 2048  |    622.01 us |   3.989 us |   3.537 us |  0.15 |
+// | UseVectors           | 2048  |    631.53 us |   6.741 us |   6.305 us |  0.15 |
+// | UseVectorsParallel   | 2048  |    330.47 us |   5.479 us |   4.857 us |  0.08 |
+// | UseVectorsParallel2  | 2048  |    362.95 us |   6.374 us |   5.962 us |  0.08 |
+// | UseVectorsX2         | 2048  |    622.86 us |   7.399 us |   6.921 us |  0.15 |
+// | UseVectorsX2Parallel | 2048  |    339.39 us |   5.836 us |   5.459 us |  0.08 |
+// | SoontsVector         | 2048  |  5,691.75 us |  20.576 us |  17.182 us |  1.33 |
+// |                      |       |              |            |            |       |
+// | Scalar               | 4096  | 17,252.90 us | 106.215 us |  99.353 us |  1.00 |
+// | ScalarParallel       | 4096  |  3,743.78 us |  25.989 us |  24.310 us |  0.22 |
+// | UseVectors           | 4096  |  3,273.92 us |  32.645 us |  30.537 us |  0.19 |
+// | UseVectorsParallel   | 4096  |  3,746.83 us |  11.083 us |   9.255 us |  0.22 |
+// | UseVectorsParallel2  | 4096  |  3,778.64 us |  72.801 us |  71.501 us |  0.22 |
+// | UseVectorsX2         | 4096  |  3,218.48 us |  28.084 us |  26.270 us |  0.19 |
+// | UseVectorsX2Parallel | 4096  |  3,811.73 us |  44.010 us |  41.167 us |  0.22 |
+// | SoontsVector         | 4096  | 22,836.86 us | 190.572 us | 178.261 us |  1.32 |
+
+// -- `.NET Framework` on X86
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4460/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+//   [Host]     : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+//   DefaultJob : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+// 
+// 
+// | Method               | Width | Mean        | Error     | StdDev    | Ratio | RatioSD | Code Size |
+// |--------------------- |------ |------------:|----------:|----------:|------:|--------:|----------:|
+// | Scalar               | 1024  |  1,144.3 us |   6.87 us |   6.43 us |  1.00 |    0.01 |   2,813 B |
+// | ScalarParallel       | 1024  |    188.0 us |   2.84 us |   2.65 us |  0.16 |    0.00 |   2,816 B |
+// | UseVectors           | 1024  |  3,761.0 us |  44.63 us |  41.75 us |  3.29 |    0.04 |        NA |
+// | UseVectorsParallel   | 1024  |    510.2 us |   7.41 us |   6.93 us |  0.45 |    0.01 |        NA |
+// | UseVectorsParallel2  | 1024  |    655.9 us |  12.36 us |  11.56 us |  0.57 |    0.01 |        NA |
+// | UseVectorsX2         | 1024  |  2,545.8 us |  14.70 us |  13.03 us |  2.22 |    0.02 |        NA |
+// | UseVectorsX2Parallel | 1024  |    355.5 us |   4.53 us |   4.24 us |  0.31 |    0.00 |        NA |
+// |                      |       |             |           |           |       |         |           |
+// | Scalar               | 2048  |  4,572.6 us |  16.74 us |  14.84 us |  1.00 |    0.00 |   2,813 B |
+// | ScalarParallel       | 2048  |    704.0 us |   8.79 us |   8.22 us |  0.15 |    0.00 |   2,816 B |
+// | UseVectors           | 2048  | 14,765.7 us | 168.90 us | 157.99 us |  3.23 |    0.03 |        NA |
+// | UseVectorsParallel   | 2048  |  1,946.6 us |  38.41 us |  39.44 us |  0.43 |    0.01 |        NA |
+// | UseVectorsParallel2  | 2048  |  2,437.1 us |  48.45 us |  59.50 us |  0.53 |    0.01 |        NA |
+// | UseVectorsX2         | 2048  | 10,566.7 us |  36.51 us |  32.37 us |  2.31 |    0.01 |        NA |
+// | UseVectorsX2Parallel | 2048  |  1,338.9 us |  26.01 us |  38.12 us |  0.29 |    0.01 |        NA |
+// |                      |       |             |           |           |       |         |           |
+// | Scalar               | 4096  | 18,254.0 us | 122.53 us | 114.61 us |  1.00 |    0.01 |   2,813 B |
+// | ScalarParallel       | 4096  |  3,726.5 us |  25.17 us |  23.54 us |  0.20 |    0.00 |   2,816 B |
+// | UseVectors           | 4096  | 59,189.0 us | 931.28 us | 871.12 us |  3.24 |    0.05 |        NA |
+// | UseVectorsParallel   | 4096  |  7,127.7 us | 138.79 us | 136.31 us |  0.39 |    0.01 |        NA |
+// | UseVectorsParallel2  | 4096  |  9,802.2 us | 191.50 us | 325.18 us |  0.54 |    0.02 |        NA |
+// | UseVectorsX2         | 4096  | 38,508.4 us | 135.91 us | 113.49 us |  2.11 |    0.01 |        NA |
+// | UseVectorsX2Parallel | 4096  |  5,204.3 us |  55.91 us |  49.56 us |  0.29 |    0.00 |        NA |
