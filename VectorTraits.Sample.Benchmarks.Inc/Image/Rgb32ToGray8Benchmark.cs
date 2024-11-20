@@ -26,7 +26,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 #endif // BENCHMARKS_OFF
 
     /// <summary>
-    /// How to convert byte array of image pixels data to grayscale using vector SSE operation? https://stackoverflow.com/questions/58881359/how-to-convert-byte-array-of-image-pixels-data-to-grayscale-using-vector-sse-ope/
+    /// Converte Rgb32 color bitmap to Gray8 grayscale bitmap (将Rgb32彩色位图转为Gray8灰度位图). How to convert byte array of image pixels data to grayscale using vector SSE operation? https://stackoverflow.com/questions/58881359/how-to-convert-byte-array-of-image-pixels-data-to-grayscale-using-vector-sse-ope/
     /// </summary>
     public class Rgb32ToGray8Benchmark : IDisposable {
         private bool _disposed = false;

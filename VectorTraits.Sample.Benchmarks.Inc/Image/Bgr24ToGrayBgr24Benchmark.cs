@@ -26,7 +26,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 #endif // BENCHMARKS_OFF
 
     /// <summary>
-    /// C++ to C# memory alignment issue https://stackoverflow.com/questions/79185374/c-to-c-sharp-memory-alignment-issue/
+    /// Converte Bgr24 color bitmap to grayscale Bgr24 bitmap (将Bgr24彩色位图转为灰度的Bgr24位图). C++ to C# memory alignment issue. https://stackoverflow.com/questions/79185374/c-to-c-sharp-memory-alignment-issue/
     /// </summary>
     public class Bgr24ToGrayBgr24Benchmark : IDisposable {
         private bool _disposed = false;

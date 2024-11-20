@@ -25,7 +25,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Group {
 #endif // BENCHMARKS_OFF
 
     /// <summary>
-    /// How do I optimally fill multiple arrays with SIMDs vectors? https://stackoverflow.com/questions/77984612/how-do-i-optimally-fill-multiple-arrays-with-simds-vectors/
+    /// Deinterleave the Double array and split it into arrays of X, Y, Z, and W (对Double数组进行解交织，拆分出 X,Y,Z,W的数组). How do I optimally fill multiple arrays with SIMDs vectors? https://stackoverflow.com/questions/77984612/how-do-i-optimally-fill-multiple-arrays-with-simds-vectors/
     /// </summary>
     public class SplitLanes4Double {
         private static readonly Random _random = new Random(1337);
