@@ -511,3 +511,79 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 }
 
 // == Benchmarks result
+
+// -- `.NET8.0` on Arm
+// BenchmarkDotNet v0.14.0, macOS Sequoia 15.0.1 (24A348) [Darwin 24.0.0]
+// Apple M2, 1 CPU, 8 logical and 8 physical cores
+// .NET SDK 8.0.204
+//   [Host]     : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+//   DefaultJob : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+// 
+// 
+// | Method                         | Width | Mean         | Error     | StdDev    | Ratio | RatioSD |
+// |------------------------------- |------ |-------------:|----------:|----------:|------:|--------:|
+// | Scalar                         | 1024  |    637.15 us |  0.207 us |  0.184 us |  1.00 |    0.00 |
+// | UseVectors                     | 1024  |    127.65 us |  0.052 us |  0.048 us |  0.20 |    0.00 |
+// | UseVectorsParallel             | 1024  |     43.16 us |  0.177 us |  0.148 us |  0.07 |    0.00 |
+// | Soonts_MultiplyHigh            | 1024  |           NA |        NA |        NA |     ? |       ? |
+// | User555045_MultiplyAddAdjacent | 1024  |           NA |        NA |        NA |     ? |       ? |
+// |                                |       |              |           |           |       |         |
+// | Scalar                         | 2048  |  2,581.51 us | 32.263 us | 30.179 us |  1.00 |    0.02 |
+// | UseVectors                     | 2048  |    527.90 us |  1.921 us |  1.500 us |  0.20 |    0.00 |
+// | UseVectorsParallel             | 2048  |    196.80 us |  3.912 us |  7.252 us |  0.08 |    0.00 |
+// | Soonts_MultiplyHigh            | 2048  |           NA |        NA |        NA |     ? |       ? |
+// | User555045_MultiplyAddAdjacent | 2048  |           NA |        NA |        NA |     ? |       ? |
+// |                                |       |              |           |           |       |         |
+// | Scalar                         | 4096  | 10,473.95 us |  5.011 us |  4.687 us |  1.00 |    0.00 |
+// | UseVectors                     | 4096  |  2,123.46 us |  1.009 us |  0.944 us |  0.20 |    0.00 |
+// | UseVectorsParallel             | 4096  |  1,367.01 us | 26.117 us | 36.612 us |  0.13 |    0.00 |
+// | Soonts_MultiplyHigh            | 4096  |           NA |        NA |        NA |     ? |       ? |
+// | User555045_MultiplyAddAdjacent | 4096  |           NA |        NA |        NA |     ? |       ? |
+
+// -- `.NET8.0` on X86
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4460/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+// .NET SDK 8.0.403
+//   [Host]     : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+//   DefaultJob : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+// 
+// 
+// | Method                         | Width | Mean         | Error     | StdDev    | Ratio | Code Size |
+// |------------------------------- |------ |-------------:|----------:|----------:|------:|----------:|
+// | Scalar                         | 1024  |  1,020.44 us |  3.610 us |  3.377 us |  1.00 |     152 B |
+// | UseVectors                     | 1024  |     88.43 us |  1.408 us |  1.446 us |  0.09 |        NA |
+// | UseVectorsParallel             | 1024  |     26.95 us |  0.519 us |  0.486 us |  0.03 |        NA |
+// | Soonts_MultiplyHigh            | 1024  |    166.90 us |  1.465 us |  1.299 us |  0.16 |   1,006 B |
+// | User555045_MultiplyAddAdjacent | 1024  |     77.91 us |  1.491 us |  1.831 us |  0.08 |     899 B |
+// |                                |       |              |           |           |       |           |
+// | Scalar                         | 2048  |  4,082.12 us | 11.502 us | 10.196 us |  1.00 |     152 B |
+// | UseVectors                     | 2048  |    644.38 us | 12.742 us | 15.649 us |  0.16 |        NA |
+// | UseVectorsParallel             | 2048  |    198.42 us |  5.257 us | 15.500 us |  0.05 |        NA |
+// | Soonts_MultiplyHigh            | 2048  |    817.16 us | 10.894 us | 10.191 us |  0.20 |   1,006 B |
+// | User555045_MultiplyAddAdjacent | 2048  |    615.16 us |  7.149 us |  6.338 us |  0.15 |     899 B |
+// |                                |       |              |           |           |       |           |
+// | Scalar                         | 4096  | 16,325.46 us | 53.068 us | 47.044 us |  1.00 |     152 B |
+// | UseVectors                     | 4096  |  2,994.78 us | 27.709 us | 23.138 us |  0.18 |        NA |
+// | UseVectorsParallel             | 4096  |  2,476.04 us | 41.154 us | 38.495 us |  0.15 |        NA |
+// | Soonts_MultiplyHigh            | 4096  |  3,321.84 us | 64.082 us | 53.512 us |  0.20 |   1,006 B |
+// | User555045_MultiplyAddAdjacent | 4096  |  2,909.79 us | 29.276 us | 27.385 us |  0.18 |     899 B |
+
+// -- `.NET Framework` on X86
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+//   [Host]     : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+//   DefaultJob : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+// 
+// 
+// | Method             | Width | Mean        | Error     | StdDev    | Ratio | RatioSD | Code Size |
+// |------------------- |------ |------------:|----------:|----------:|------:|--------:|----------:|
+// | Scalar             | 1024  |  1,020.6 us |   5.41 us |   5.06 us |  1.00 |    0.01 |     166 B |
+// | UseVectors         | 1024  |  1,501.5 us |  30.02 us |  59.25 us |  1.47 |    0.06 |   6,164 B |
+// | UseVectorsParallel | 1024  |    262.9 us |   5.18 us |  10.23 us |  0.26 |    0.01 |        NA |
+// |                    |       |             |           |           |       |         |           |
+// | Scalar             | 2048  |  4,065.1 us |  70.32 us |  72.21 us |  1.00 |    0.02 |     166 B |
+// | UseVectors         | 2048  |  5,781.3 us |  97.26 us | 133.13 us |  1.42 |    0.04 |   6,164 B |
+// | UseVectorsParallel | 2048  |  1,052.1 us |  20.18 us |  22.43 us |  0.26 |    0.01 |   6,167 B |
+// |                    |       |             |           |           |       |         |           |
+// | Scalar             | 4096  | 17,124.3 us | 337.81 us | 515.87 us |  1.00 |    0.04 |     166 B |
+// | UseVectors         | 4096  | 23,367.5 us | 454.46 us | 446.34 us |  1.37 |    0.05 |   6,164 B |
+// | UseVectorsParallel | 4096  |  3,998.2 us |  79.26 us |  74.14 us |  0.23 |    0.01 |   6,167 B |
