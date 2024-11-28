@@ -1,4 +1,4 @@
-﻿//#undef BENCHMARKS_OFF
+﻿#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -28,7 +28,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
     /// <summary>
     /// Flip the image vertically(FlipY) (对图像进行垂直翻转(FlipY)).
     /// </summary>
-    public class ImageFlipYBenchmark : IDisposable {
+    public class ImageFlipXOn32bitBenchmark : IDisposable {
         private bool _disposed = false;
         private static readonly Random _random = new Random(1);
         private BitmapData _sourceBitmapData = null;
@@ -39,7 +39,22 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         public int Width { get; set; }
         public int Height { get; set; }
 
-        ~ImageFlipYBenchmark() {
+        private static readonly Vector<int> _shuffleIndices;
+
+        static ImageFlipXOn32bitBenchmark() {
+            bool AllowCreateByDoubleLoop = true;
+            if (AllowCreateByDoubleLoop) {
+                _shuffleIndices = Vectors.CreateByDoubleLoop<int>(Vector<int>.Count - 1, -1);
+            } else {
+                Span<int> buf = stackalloc int[Vector<int>.Count];
+                for (int i = 0;i< Vector<int>.Count; i++) {
+                    buf[i] = Vector<int>.Count - 1 - i;
+                }
+                _shuffleIndices = Vectors.Create(buf);
+            }
+        }
+
+        ~ImageFlipXOn32bitBenchmark() {
             Dispose(false);
         }
 
@@ -67,6 +82,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     break;
                 case PixelFormat.Format24bppRgb:
                     stride = width * 3;
+                    break;
+                case PixelFormat.Format32bppRgb:
+                    stride = width * 4;
                     break;
             }
             if (stride <= 0) throw new ArgumentOutOfRangeException($"Invalid pixel format({format})!");
@@ -101,9 +119,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             Height = Width;
             // Create.
             Cleanup();
-            _sourceBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
-            _destinationBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
-            _expectedBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
+            _sourceBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format32bppRgb);
+            _destinationBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format32bppRgb);
+            _expectedBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format32bppRgb);
             RandomFillBitmapData(_sourceBitmapData, _random);
 
             // Check.
@@ -114,7 +132,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     long totalDifference, countByteDifference;
                     int maxDifference;
                     double averageDifference;
-                    long totalByte = Width * Height * 3;
+                    long totalByte = Width * Height * 4;
                     double percentDifference;
                     // Baseline
                     ScalarDo(_sourceBitmapData, _expectedBitmapData);
@@ -136,18 +154,18 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVectorsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
-                    // UseCopy
-                    UseCopy();
+                    // UseVectorsArgs
+                    UseVectorsArgs();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of UseCopy: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
-                    // UseCopyParallel
-                    UseCopyParallel();
+                    writer.WriteLine(string.Format("Difference of UseVectorsArgs: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsArgsParallel
+                    UseVectorsArgsParallel();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of UseCopyParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    writer.WriteLine(string.Format("Difference of UseVectorsArgsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
                 } catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
                 }
@@ -177,7 +195,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         private unsafe long SumDifference(BitmapData expected, BitmapData dst, out long countByteDifference, out int maxDifference) {
-            const int cbPixel = 3; // Bgr24.
+            const int cbPixel = 4; // 32 bit: Bgr32, Bgra32, Rgb32, Rgba32.
             long totalDifference = 0;
             countByteDifference = 0;
             maxDifference = 0;
@@ -221,7 +239,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             ScalarDo(_sourceBitmapData, _destinationBitmapData, false);
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void ScalarParallel() {
             ScalarDo(_sourceBitmapData, _destinationBitmapData, true);
         }
@@ -239,7 +257,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     int start = i;
                     int len = 1;
                     byte* pSrc2 = pSrc + start * (long)strideSrc;
-                    byte* pDst2 = pDst + (height - 1 - start) * (long)strideDst;
+                    byte* pDst2 = pDst + start * (long)strideDst;
                     ScalarDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
                 });
             } else {
@@ -248,17 +266,21 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         public static unsafe void ScalarDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
-            int strideCommon = Math.Min(Math.Abs(strideSrc), Math.Abs(strideDst));
+            const int cbPixel = 4; // 32 bit: Bgr32, Bgra32, Rgb32, Rgba32.
             byte* pRow = pSrc;
-            byte* qRow = pDst + (height - 1) * (long)strideDst; // Set to last row.
+            byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
-                byte* p = pRow;
+                byte* p = pRow + (width - 1) * cbPixel;
                 byte* q = qRow;
-                for (int j = 0; j < strideCommon; j++) {
-                    *q++ = *p++;
+                for (int j = 0; j < width; j++) {
+                    for (int k = 0; k < cbPixel; k++) {
+                        q[k] = p[k];
+                    }
+                    p -= cbPixel;
+                    q += cbPixel;
                 }
                 pRow += strideSrc;
-                qRow -= strideDst;
+                qRow += strideDst;
             }
         }
 
@@ -267,7 +289,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             UseVectorsDo(_sourceBitmapData, _destinationBitmapData, false);
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void UseVectorsParallel() {
             UseVectorsDo(_sourceBitmapData, _destinationBitmapData, true);
         }
@@ -290,7 +312,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     int start = i;
                     int len = 1;
                     byte* pSrc2 = pSrc + start * (long)strideSrc;
-                    byte* pDst2 = pDst + (height - 1 - start) * (long)strideDst;
+                    byte* pDst2 = pDst + start * (long)strideDst;
                     UseVectorsDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
                 });
             } else {
@@ -299,47 +321,56 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         public static unsafe void UseVectorsDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
-            int strideCommon = Math.Min(Math.Abs(strideSrc), Math.Abs(strideDst));
-            int vectorWidth = Vector<byte>.Count;
-            int maxX = strideCommon - vectorWidth;
+            const int cbPixel = 4; // 32 bit: Bgr32, Bgra32, Rgb32, Rgba32.
+            Vector<int> indices = _shuffleIndices;
+            int vectorWidth = Vector<int>.Count;
+            int maxX = width - vectorWidth;
             byte* pRow = pSrc;
-            byte* qRow = pDst + (height - 1) * (long)strideDst; // Set to last row.
+            byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
-                Vector<byte>* pLast = (Vector<byte>*)(pRow + maxX);
-                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX);
-                Vector<byte>* p = (Vector<byte>*)pRow;
-                Vector<byte>* q = (Vector<byte>*)qRow;
+                Vector<int>* pLast = (Vector<int>*)pRow;
+                Vector<int>* qLast = (Vector<int>*)(qRow + maxX * cbPixel);
+                Vector<int>* p = (Vector<int>*)(pRow + maxX * cbPixel);
+                Vector<int>* q = (Vector<int>*)qRow;
                 for (; ; ) {
-                    Vector<byte> data;
+                    Vector<int> data, temp;
                     // Load.
                     data = *p;
+                    // FlipX.
+                    //temp = Vectors.Shuffle(data, indices);
+                    temp = Vectors.YShuffleKernel(data, indices);
                     // Store.
-                    *q = data;
+                    *q = temp;
                     // Next.
-                    if (p >= pLast) break;
-                    ++p;
+                    if (p <= pLast) break;
+                    --p;
                     ++q;
-                    if (p > pLast) p = pLast; // The last block is also use vector.
+                    if (p < pLast) p = pLast; // The last block is also use vector.
                     if (q > qLast) q = qLast;
                 }
                 pRow += strideSrc;
-                qRow -= strideDst;
+                qRow += strideDst;
             }
         }
 
         [Benchmark]
-        public void UseCopy() {
-            UseCopyDo(_sourceBitmapData, _destinationBitmapData, false);
+        public void UseVectorsArgs() {
+            UseVectorsArgsDo(_sourceBitmapData, _destinationBitmapData, false);
         }
 
-        [Benchmark]
-        public void UseCopyParallel() {
-            UseCopyDo(_sourceBitmapData, _destinationBitmapData, true);
+        //[Benchmark]
+        public void UseVectorsArgsParallel() {
+            UseVectorsArgsDo(_sourceBitmapData, _destinationBitmapData, true);
         }
 
-        public static unsafe void UseCopyDo(BitmapData src, BitmapData dst, bool useParallel = false) {
+        public static unsafe void UseVectorsArgsDo(BitmapData src, BitmapData dst, bool useParallel = false) {
+            int vectorWidth = Vector<byte>.Count;
             int width = src.Width;
             int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst, useParallel);
+                return;
+            }
             int strideSrc = src.Stride;
             int strideDst = dst.Stride;
             byte* pSrc = (byte*)src.Scan0.ToPointer();
@@ -350,22 +381,46 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     int start = i;
                     int len = 1;
                     byte* pSrc2 = pSrc + start * (long)strideSrc;
-                    byte* pDst2 = pDst + (height - 1 - start) * (long)strideDst;
-                    UseCopyDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
+                    byte* pDst2 = pDst + start * (long)strideDst;
+                    UseVectorsArgsDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
                 });
             } else {
-                UseCopyDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+                UseVectorsArgsDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
             }
         }
 
-        public static unsafe void UseCopyDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
-            int strideCommon = Math.Min(Math.Abs(strideSrc), Math.Abs(strideDst));
+        public static unsafe void UseVectorsArgsDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
+            const int cbPixel = 4; // 32 bit: Bgr32, Bgra32, Rgb32, Rgba32.
+            Vector<int> indices = _shuffleIndices;
+            Vector<int> args0, args1;
+            Vectors.YShuffleKernel_Args(indices, out args0, out args1);
+            int vectorWidth = Vector<int>.Count;
+            int maxX = width - vectorWidth;
             byte* pRow = pSrc;
-            byte* qRow = pDst + (height - 1) * (long)strideDst; // Set to last row.
+            byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
-                Buffer.MemoryCopy(pRow, qRow, strideCommon, strideCommon);
+                Vector<int>* pLast = (Vector<int>*)pRow;
+                Vector<int>* qLast = (Vector<int>*)(qRow + maxX * cbPixel);
+                Vector<int>* p = (Vector<int>*)(pRow + maxX * cbPixel);
+                Vector<int>* q = (Vector<int>*)qRow;
+                for (; ; ) {
+                    Vector<int> data, temp;
+                    // Load.
+                    data = *p;
+                    // FlipX.
+                    //temp = Vectors.YShuffleKernel(data, indices);
+                    temp = Vectors.YShuffleKernel_Core(data, args0, args1);
+                    // Store.
+                    *q = temp;
+                    // Next.
+                    if (p <= pLast) break;
+                    --p;
+                    ++q;
+                    if (p < pLast) p = pLast; // The last block is also use vector.
+                    if (q > qLast) q = qLast;
+                }
                 pRow += strideSrc;
-                qRow -= strideDst;
+                qRow += strideDst;
             }
         }
 
