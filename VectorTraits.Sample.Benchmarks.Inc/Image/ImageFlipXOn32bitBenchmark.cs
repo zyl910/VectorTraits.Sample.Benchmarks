@@ -134,6 +134,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     double averageDifference;
                     long totalByte = Width * Height * 4;
                     double percentDifference;
+                    writer.WriteLine(string.Format("YShuffleKernel_AcceleratedTypes:\t{0}", Vectors.YShuffleKernel_AcceleratedTypes));
                     // Baseline
                     ScalarDo(_sourceBitmapData, _expectedBitmapData);
                     // ScalarParallel
