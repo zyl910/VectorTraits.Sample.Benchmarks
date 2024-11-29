@@ -1,4 +1,4 @@
-﻿#undef BENCHMARKS_OFF
+﻿//#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -137,6 +137,12 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     writer.WriteLine(string.Format("YShuffleKernel_AcceleratedTypes:\t{0}", Vectors.YShuffleKernel_AcceleratedTypes));
                     // Baseline
                     ScalarDo(_sourceBitmapData, _expectedBitmapData);
+                    // Scalar
+                    ScalarDo(_expectedBitmapData, _destinationBitmapData);
+                    totalDifference = SumDifference(_sourceBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of Scalar: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
                     // ScalarParallel
                     ScalarParallel();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
