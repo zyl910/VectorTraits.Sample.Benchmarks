@@ -8,6 +8,8 @@ Supported .NET versions: .NET Framework 4.5-4.8.1, .NET Core 2.0-3.1, .NET 5.0-8
 
 Supported architectures: X86(Include X86-64), Arm.
 
+Supported operating system: Windows, Linux, MacOS ...
+
 Sample list: [SampleList](SampleList.md)
 
 

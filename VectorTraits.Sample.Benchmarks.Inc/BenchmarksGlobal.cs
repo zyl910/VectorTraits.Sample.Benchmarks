@@ -139,8 +139,8 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
             // - Image
             //var target = new Bgr24ToGray8Benchmark() { Width = 1024 };
             //var target = new Bgr24ToGrayBgr24Benchmark() { Width = 1024 };
-            //var target = new ImageFlipXOn32bitBenchmark() { Width = 1024 };
-            var target = new ImageFlipYBenchmark() { Width = 1024 };
+            var target = new ImageFlipXOn32bitBenchmark() { Width = 1024 };
+            //var target = new ImageFlipYBenchmark() { Width = 1024 };
             //var target = new Rgb32ToGray8Benchmark() { Width = 1024 };
             // - Run
             target.Setup();
