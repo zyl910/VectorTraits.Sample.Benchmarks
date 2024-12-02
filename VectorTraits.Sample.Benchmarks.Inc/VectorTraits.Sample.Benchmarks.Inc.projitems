@@ -16,6 +16,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Group\SplitLanes4Double.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\Bgr24ToGray8Benchmark.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\Bgr24ToGrayBgr24Benchmark.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Image\ImageFlipXOn24bitBenchmark.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\ImageFlipXOn32bitBenchmark.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\ImageFlipYBenchmark.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Image\Rgb32ToGray8Benchmark.cs" />

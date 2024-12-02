@@ -1,4 +1,4 @@
-﻿//#undef BENCHMARKS_OFF
+﻿#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -13,6 +13,8 @@ using System.Runtime.InteropServices;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Security.Cryptography;
+
 #endif
 using System.Text;
 using System.Threading;
@@ -26,9 +28,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 #endif // BENCHMARKS_OFF
 
     /// <summary>
-    /// Flip a 32-bit image horizontally(FlipX) (对32位图像进行水平翻转(FlipX)).
+    /// Flip a 24-bit image horizontally(FlipX) (对24位图像进行水平翻转(FlipX)).
     /// </summary>
-    public class ImageFlipXOn32bitBenchmark : IDisposable {
+    public class ImageFlipXOn24bitBenchmark : IDisposable {
         private bool _disposed = false;
         private static readonly Random _random = new Random(1);
         private BitmapData _sourceBitmapData = null;
@@ -39,22 +41,26 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         public int Width { get; set; }
         public int Height { get; set; }
 
-        private static readonly Vector<int> _shuffleIndices;
+        private static readonly Vector<byte> _shuffleIndices0;
+        private static readonly Vector<byte> _shuffleIndices1;
+        private static readonly Vector<byte> _shuffleIndices2;
 
-        static ImageFlipXOn32bitBenchmark() {
-            bool AllowCreateByDoubleLoop = true;
-            if (AllowCreateByDoubleLoop) {
-                _shuffleIndices = Vectors.CreateByDoubleLoop<int>(Vector<int>.Count - 1, -1);
-            } else {
-                Span<int> buf = stackalloc int[Vector<int>.Count];
-                for (int i = 0;i< Vector<int>.Count; i++) {
-                    buf[i] = Vector<int>.Count - 1 - i;
-                }
-                _shuffleIndices = Vectors.Create(buf);
+        static ImageFlipXOn24bitBenchmark() {
+            const int cbPixel = 3; // 24 bit: Bgr24, Rgb24.
+            int vectorWidth = Vector<byte>.Count;
+            int blockSize = vectorWidth * cbPixel;
+            Span<byte> buf = stackalloc byte[blockSize];
+            for (int i = 0; i < blockSize; i++) {
+                int m = i / cbPixel;
+                int n = i % cbPixel;
+                buf[i] = (byte)((vectorWidth - 1 - m) * cbPixel + n);
             }
+            _shuffleIndices0 = Vectors.Create(buf);
+            _shuffleIndices1 = Vectors.Create(buf.Slice(vectorWidth * 1));
+            _shuffleIndices2 = Vectors.Create(buf.Slice(vectorWidth * 2));
         }
 
-        ~ImageFlipXOn32bitBenchmark() {
+        ~ImageFlipXOn24bitBenchmark() {
             Dispose(false);
         }
 
@@ -119,9 +125,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             Height = Width;
             // Create.
             Cleanup();
-            _sourceBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format32bppRgb);
-            _destinationBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format32bppRgb);
-            _expectedBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format32bppRgb);
+            _sourceBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
+            _destinationBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
+            _expectedBitmapData = AllocBitmapData(Width, Height, PixelFormat.Format24bppRgb);
             RandomFillBitmapData(_sourceBitmapData, _random);
 
             // Check.
@@ -132,9 +138,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     long totalDifference, countByteDifference;
                     int maxDifference;
                     double averageDifference;
-                    long totalByte = Width * Height * 4;
+                    long totalByte = Width * Height * 3;
                     double percentDifference;
-                    writer.WriteLine(string.Format("YShuffleKernel_AcceleratedTypes:\t{0}", Vectors.YShuffleKernel_AcceleratedTypes));
+                    writer.WriteLine(string.Format("YShuffleX3Kernel_AcceleratedTypes:\t{0}", Vectors.YShuffleX3Kernel_AcceleratedTypes));
                     // Baseline
                     ScalarDo(_sourceBitmapData, _expectedBitmapData);
                     // Scalar
@@ -202,7 +208,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         private unsafe long SumDifference(BitmapData expected, BitmapData dst, out long countByteDifference, out int maxDifference) {
-            const int cbPixel = 4; // 32 bit: Bgr32, Bgra32, Rgb32, Rgba32.
+            const int cbPixel = 3; // 24 bit: Bgr24, Rgb24.
             long totalDifference = 0;
             countByteDifference = 0;
             maxDifference = 0;
@@ -273,7 +279,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         public static unsafe void ScalarDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
-            const int cbPixel = 4; // 32 bit: Bgr32, Bgra32, Rgb32, Rgba32.
+            const int cbPixel = 3; // 24 bit: Bgr24, Rgb24.
             byte* pRow = pSrc;
             byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
@@ -328,30 +334,41 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         public static unsafe void UseVectorsDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
-            const int cbPixel = 4; // 32 bit: Bgr32, Bgra32, Rgb32, Rgba32.
-            Vector<int> indices = _shuffleIndices;
-            int vectorWidth = Vector<int>.Count;
+            const int cbPixel = 3; // 24 bit: Bgr24, Rgb24.
+            Vector<byte> indices0 = _shuffleIndices0;
+            Vector<byte> indices1 = _shuffleIndices1;
+            Vector<byte> indices2 = _shuffleIndices2;
+            int vectorWidth = Vector<byte>.Count;
+            if (width <= vectorWidth) {
+                ScalarDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+                return;
+            }
             int maxX = width - vectorWidth;
             byte* pRow = pSrc;
             byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
-                Vector<int>* pLast = (Vector<int>*)pRow;
-                Vector<int>* qLast = (Vector<int>*)(qRow + maxX * cbPixel);
-                Vector<int>* p = (Vector<int>*)(pRow + maxX * cbPixel);
-                Vector<int>* q = (Vector<int>*)qRow;
+                Vector<byte>* pLast = (Vector<byte>*)pRow;
+                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * cbPixel);
+                Vector<byte>* p = (Vector<byte>*)(pRow + maxX * cbPixel);
+                Vector<byte>* q = (Vector<byte>*)qRow;
                 for (; ; ) {
-                    Vector<int> data, temp;
+                    Vector<byte> data0, data1, data2, temp0, temp1, temp2;
                     // Load.
-                    data = *p;
+                    data0 = p[0];
+                    data1 = p[1];
+                    data2 = p[2];
                     // FlipX.
-                    //temp = Vectors.Shuffle(data, indices);
-                    temp = Vectors.YShuffleKernel(data, indices);
+                    temp0 = Vectors.YShuffleX3Kernel(data0, data1, data2, indices0);
+                    temp1 = Vectors.YShuffleX3Kernel(data0, data1, data2, indices1);
+                    temp2 = Vectors.YShuffleX3Kernel(data0, data1, data2, indices2);
                     // Store.
-                    *q = temp;
+                    q[0] = temp0;
+                    q[1] = temp1;
+                    q[2] = temp2;
                     // Next.
                     if (p <= pLast) break;
-                    --p;
-                    ++q;
+                    p -= cbPixel;
+                    q += cbPixel;
                     if (p < pLast) p = pLast; // The last block is also use vector.
                     if (q > qLast) q = qLast;
                 }
@@ -397,32 +414,44 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
         public static unsafe void UseVectorsArgsDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
-            const int cbPixel = 4; // 32 bit: Bgr32, Bgra32, Rgb32, Rgba32.
-            Vector<int> indices = _shuffleIndices;
-            Vector<int> args0, args1;
-            Vectors.YShuffleKernel_Args(indices, out args0, out args1);
-            int vectorWidth = Vector<int>.Count;
+            const int cbPixel = 3; // 24 bit: Bgr24, Rgb24.
+            Vectors.YShuffleX3Kernel_Args(_shuffleIndices0, out var indices0arg0, out var indices0arg1, out var indices0arg2, out var indices0arg3);
+            Vectors.YShuffleX3Kernel_Args(_shuffleIndices1, out var indices1arg0, out var indices1arg1, out var indices1arg2, out var indices1arg3);
+            Vectors.YShuffleX3Kernel_Args(_shuffleIndices2, out var indices2arg0, out var indices2arg1, out var indices2arg2, out var indices2arg3);
+            int vectorWidth = Vector<byte>.Count;
+            if (width <= vectorWidth) {
+                ScalarDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+                return;
+            }
             int maxX = width - vectorWidth;
             byte* pRow = pSrc;
             byte* qRow = pDst;
             for (int i = 0; i < height; i++) {
-                Vector<int>* pLast = (Vector<int>*)pRow;
-                Vector<int>* qLast = (Vector<int>*)(qRow + maxX * cbPixel);
-                Vector<int>* p = (Vector<int>*)(pRow + maxX * cbPixel);
-                Vector<int>* q = (Vector<int>*)qRow;
+                Vector<byte>* pLast = (Vector<byte>*)pRow;
+                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * cbPixel);
+                Vector<byte>* p = (Vector<byte>*)(pRow + maxX * cbPixel);
+                Vector<byte>* q = (Vector<byte>*)qRow;
                 for (; ; ) {
-                    Vector<int> data, temp;
+                    Vector<byte> data0, data1, data2, temp0, temp1, temp2;
                     // Load.
-                    data = *p;
+                    data0 = p[0];
+                    data1 = p[1];
+                    data2 = p[2];
                     // FlipX.
-                    //temp = Vectors.YShuffleKernel(data, indices);
-                    temp = Vectors.YShuffleKernel_Core(data, args0, args1);
+                    //temp0 = Vectors.YShuffleX3Kernel(data0, data1, data2, _shuffleIndices0);
+                    //temp1 = Vectors.YShuffleX3Kernel(data0, data1, data2, _shuffleIndices1);
+                    //temp2 = Vectors.YShuffleX3Kernel(data0, data1, data2, _shuffleIndices2);
+                    temp0 = Vectors.YShuffleX3Kernel_Core(data0, data1, data2, indices0arg0, indices0arg1, indices0arg2, indices0arg3);
+                    temp1 = Vectors.YShuffleX3Kernel_Core(data0, data1, data2, indices1arg0, indices1arg1, indices1arg2, indices1arg3);
+                    temp2 = Vectors.YShuffleX3Kernel_Core(data0, data1, data2, indices2arg0, indices2arg1, indices2arg2, indices2arg3);
                     // Store.
-                    *q = temp;
+                    q[0] = temp0;
+                    q[1] = temp1;
+                    q[2] = temp2;
                     // Next.
                     if (p <= pLast) break;
-                    --p;
-                    ++q;
+                    p -= cbPixel;
+                    q += cbPixel;
                     if (p < pLast) p = pLast; // The last block is also use vector.
                     if (q > qLast) q = qLast;
                 }
@@ -438,88 +467,11 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 // == Benchmarks result
 
 // -- `.NET8.0` on Arm
-// BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
-// Apple M2, 1 CPU, 8 logical and 8 physical cores
-// .NET SDK 8.0.204
-//   [Host]     : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD [AttachedDebugger]
-//   DefaultJob : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
-// 
-// 
-// | Method         | Width | Mean        | Error    | StdDev   | Ratio |
-// |--------------- |------ |------------:|---------:|---------:|------:|
-// | Scalar         | 1024  |    625.8 us |  0.81 us |  0.68 us |  1.00 |
-// | UseVectors     | 1024  |    151.9 us |  0.32 us |  0.27 us |  0.24 |
-// | UseVectorsArgs | 1024  |    151.2 us |  0.13 us |  0.12 us |  0.24 |
-// |                |       |             |          |          |       |
-// | Scalar         | 2048  |  2,522.4 us |  1.28 us |  1.14 us |  1.00 |
-// | UseVectors     | 2048  |    666.9 us |  0.55 us |  0.51 us |  0.26 |
-// | UseVectorsArgs | 2048  |    663.8 us |  0.80 us |  0.67 us |  0.26 |
-// |                |       |             |          |          |       |
-// | Scalar         | 4096  | 10,797.2 us | 11.21 us | 10.48 us |  1.00 |
-// | UseVectors     | 4096  |  3,349.0 us | 39.67 us | 37.11 us |  0.31 |
-// | UseVectorsArgs | 4096  |  3,339.6 us | 20.76 us | 16.21 us |  0.31 |
 
-// -- `.NET6.0` on Arm
-// BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
-// Apple M2, 1 CPU, 8 logical and 8 physical cores
-// .NET SDK 8.0.204
-//   [Host]     : .NET 6.0.33 (6.0.3324.36610), Arm64 RyuJIT AdvSIMD [AttachedDebugger]
-//   DefaultJob : .NET 6.0.33 (6.0.3324.36610), Arm64 RyuJIT AdvSIMD
-// 
-// 
-// | Method         | Width | Mean        | Error    | StdDev   | Ratio |
-// |--------------- |------ |------------:|---------:|---------:|------:|
-// | Scalar         | 1024  |  1,805.2 us |  0.72 us |  0.60 us |  1.00 |
-// | UseVectors     | 1024  |    454.5 us |  5.45 us |  5.10 us |  0.25 |
-// | UseVectorsArgs | 1024  |    158.4 us |  0.05 us |  0.04 us |  0.09 |
-// |                |       |             |          |          |       |
-// | Scalar         | 2048  |  7,229.0 us |  2.88 us |  2.69 us |  1.00 |
-// | UseVectors     | 2048  |  1,857.4 us |  2.73 us |  2.56 us |  0.26 |
-// | UseVectorsArgs | 2048  |    656.2 us |  0.26 us |  0.23 us |  0.09 |
-// |                |       |             |          |          |       |
-// | Scalar         | 4096  | 29,574.1 us | 13.21 us | 11.03 us |  1.00 |
-// | UseVectors     | 4096  |  8,117.2 us | 28.06 us | 26.25 us |  0.27 |
-// | UseVectorsArgs | 4096  |  4,671.7 us |  2.50 us |  2.21 us |  0.16 |
+// -- `.NET7.0` on Arm
 
 // -- `.NET8.0` on X86
-// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
-// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
-// .NET SDK 8.0.403
-//   [Host]     : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
-//   DefaultJob : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
-// 
-// 
-// | Method         | Width | Mean        | Error     | StdDev    | Ratio | RatioSD |
-// |--------------- |------ |------------:|----------:|----------:|------:|--------:|
-// | Scalar         | 1024  |    784.7 us |  14.56 us |  14.30 us |  1.00 |    0.03 |
-// | UseVectors     | 1024  |    106.4 us |   2.12 us |   4.96 us |  0.14 |    0.01 |
-// | UseVectorsArgs | 1024  |    101.4 us |   2.03 us |   3.85 us |  0.13 |    0.01 |
-// |                |       |             |           |           |       |         |
-// | Scalar         | 2048  |  3,453.5 us |  25.88 us |  22.94 us |  1.00 |    0.01 |
-// | UseVectors     | 2048  |  1,520.8 us |  15.11 us |  14.13 us |  0.44 |    0.00 |
-// | UseVectorsArgs | 2048  |  1,412.9 us |  27.96 us |  47.48 us |  0.41 |    0.01 |
-// |                |       |             |           |           |       |         |
-// | Scalar         | 4096  | 12,932.8 us | 177.40 us | 165.94 us |  1.00 |    0.02 |
-// | UseVectors     | 4096  |  6,113.0 us |  43.35 us |  40.55 us |  0.47 |    0.01 |
-// | UseVectorsArgs | 4096  |  6,270.9 us |  56.80 us |  50.35 us |  0.48 |    0.01 |
+
+// -- `.NET7.0` on X86
 
 // -- `.NET Framework` on X86
-// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
-// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
-//   [Host]     : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
-//   DefaultJob : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
-// 
-// 
-// | Method         | Width | Mean        | Error     | StdDev    | Ratio | RatioSD | Code Size |
-// |--------------- |------ |------------:|----------:|----------:|------:|--------:|----------:|
-// | Scalar         | 1024  |  1,315.2 us |  26.06 us |  25.59 us |  1.00 |    0.03 |   2,718 B |
-// | UseVectors     | 1024  |    968.2 us |  17.55 us |  16.42 us |  0.74 |    0.02 |   3,507 B |
-// | UseVectorsArgs | 1024  |    887.0 us |   9.91 us |   8.78 us |  0.67 |    0.01 |   3,507 B |
-// |                |       |             |           |           |       |         |           |
-// | Scalar         | 2048  |  5,259.4 us |  85.87 us |  80.32 us |  1.00 |    0.02 |   2,718 B |
-// | UseVectors     | 2048  |  3,696.0 us |  29.64 us |  27.72 us |  0.70 |    0.01 |   3,507 B |
-// | UseVectorsArgs | 2048  |  3,722.9 us |  39.36 us |  34.90 us |  0.71 |    0.01 |   3,507 B |
-// |                |       |             |           |           |       |         |           |
-// | Scalar         | 4096  | 19,763.1 us | 300.29 us | 266.20 us |  1.00 |    0.02 |   2,718 B |
-// | UseVectors     | 4096  | 14,303.8 us |  62.36 us |  55.28 us |  0.72 |    0.01 |   3,507 B |
-// | UseVectorsArgs | 4096  | 14,988.7 us | 286.49 us | 281.37 us |  0.76 |    0.02 |   3,507 B |
