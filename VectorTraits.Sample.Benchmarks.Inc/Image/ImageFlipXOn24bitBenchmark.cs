@@ -466,12 +466,176 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 
 // == Benchmarks result
 
-// -- `.NET8.0` on Arm
+// -- `.NET6.0` on Arm
+// Vectors.Instance:	VectorTraits128AdvSimdB64	// AdvSimd
+// YShuffleX3Kernel_AcceleratedTypes:	SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
+// 
+// BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
+// Apple M2, 1 CPU, 8 logical and 8 physical cores
+// .NET SDK 8.0.204
+//   [Host]     : .NET 6.0.33 (6.0.3324.36610), Arm64 RyuJIT AdvSIMD
+//   DefaultJob : .NET 6.0.33 (6.0.3324.36610), Arm64 RyuJIT AdvSIMD
+// 
+// 
+// | Method         | Width | Mean         | Error     | StdDev    | Ratio |
+// |--------------- |------ |-------------:|----------:|----------:|------:|
+// | Scalar         | 1024  |  1,504.84 us |  0.449 us |  0.375 us |  1.00 |
+// | UseVectors     | 1024  |    119.36 us |  0.042 us |  0.040 us |  0.08 |
+// | UseVectorsArgs | 1024  |     83.89 us |  0.160 us |  0.149 us |  0.06 |
+// |                |       |              |           |           |       |
+// | Scalar         | 2048  |  6,011.17 us |  1.346 us |  1.193 us |  1.00 |
+// | UseVectors     | 2048  |    476.02 us |  6.485 us |  6.066 us |  0.08 |
+// | UseVectorsArgs | 2048  |    328.52 us |  0.298 us |  0.264 us |  0.05 |
+// |                |       |              |           |           |       |
+// | Scalar         | 4096  | 24,403.68 us |  6.763 us |  6.326 us |  1.00 |
+// | UseVectors     | 4096  |  3,378.05 us |  1.674 us |  1.566 us |  0.14 |
+// | UseVectorsArgs | 4096  |  2,852.52 us | 22.086 us | 20.660 us |  0.12 |
 
 // -- `.NET7.0` on Arm
+// Vectors.Instance:	VectorTraits128AdvSimdB64	// AdvSimd
+// YShuffleX3Kernel_AcceleratedTypes:	SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
+// 
+// BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
+// Apple M2, 1 CPU, 8 logical and 8 physical cores
+// .NET SDK 8.0.204
+//   [Host]     : .NET 7.0.20 (7.0.2024.26716), Arm64 RyuJIT AdvSIMD
+//   DefaultJob : .NET 7.0.20 (7.0.2024.26716), Arm64 RyuJIT AdvSIMD
+// 
+// 
+// | Method         | Width | Mean         | Error    | StdDev   | Ratio |
+// |--------------- |------ |-------------:|---------:|---------:|------:|
+// | Scalar         | 1024  |  1,504.47 us | 0.639 us | 0.566 us |  1.00 |
+// | UseVectors     | 1024  |    108.65 us | 0.139 us | 0.123 us |  0.07 |
+// | UseVectorsArgs | 1024  |     81.78 us | 0.142 us | 0.133 us |  0.05 |
+// |                |       |              |          |          |       |
+// | Scalar         | 2048  |  6,014.20 us | 2.201 us | 1.718 us |  1.00 |
+// | UseVectors     | 2048  |    427.18 us | 0.286 us | 0.267 us |  0.07 |
+// | UseVectorsArgs | 2048  |    318.35 us | 0.373 us | 0.330 us |  0.05 |
+// |                |       |              |          |          |       |
+// | Scalar         | 4096  | 24,403.88 us | 6.181 us | 5.480 us |  1.00 |
+// | UseVectors     | 4096  |  3,280.84 us | 4.771 us | 4.463 us |  0.13 |
+// | UseVectorsArgs | 4096  |  2,873.47 us | 4.675 us | 4.373 us |  0.12 |
 
-// -- `.NET8.0` on X86
+// -- `.NET8.0` on Arm
+// Vectors.Instance:	VectorTraits128AdvSimdB64	// AdvSimd
+// YShuffleX3Kernel_AcceleratedTypes:	SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
+// 
+// BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
+// Apple M2, 1 CPU, 8 logical and 8 physical cores
+// .NET SDK 8.0.204
+//   [Host]     : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+//   DefaultJob : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+// 
+// 
+// | Method         | Width | Mean        | Error     | StdDev    | Ratio |
+// |--------------- |------ |------------:|----------:|----------:|------:|
+// | Scalar         | 1024  |   478.43 us |  2.053 us |  1.921 us |  1.00 |
+// | UseVectors     | 1024  |    61.18 us |  0.677 us |  0.633 us |  0.13 |
+// | UseVectorsArgs | 1024  |    61.93 us |  0.225 us |  0.199 us |  0.13 |
+// |                |       |             |           |           |       |
+// | Scalar         | 2048  | 1,891.65 us |  5.621 us |  4.693 us |  1.00 |
+// | UseVectors     | 2048  |   260.20 us |  0.201 us |  0.179 us |  0.14 |
+// | UseVectorsArgs | 2048  |   263.75 us |  0.851 us |  0.796 us |  0.14 |
+// |                |       |             |           |           |       |
+// | Scalar         | 4096  | 7,900.34 us | 91.227 us | 85.333 us |  1.00 |
+// | UseVectors     | 4096  | 2,310.99 us | 17.264 us | 14.416 us |  0.29 |
+// | UseVectorsArgs | 4096  | 2,310.74 us |  1.605 us |  1.423 us |  0.29 |
+
+// -- `.NET6.0` on X86
+// Vectors.Instance:       VectorTraits256Avx2     // Avx, Avx2, Sse, Sse2
+// YShuffleX3Kernel_AcceleratedTypes:      SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
+// 
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+// .NET SDK 8.0.403
+//   [Host]     : .NET 6.0.35 (6.0.3524.45918), X64 RyuJIT AVX2
+//   DefaultJob : .NET 6.0.35 (6.0.3524.45918), X64 RyuJIT AVX2
+// 
+// 
+// | Method         | Width | Mean        | Error     | StdDev    | Ratio | RatioSD | Code Size |
+// |--------------- |------ |------------:|----------:|----------:|------:|--------:|----------:|
+// | Scalar         | 1024  |  1,110.8 us |  21.74 us |  22.33 us |  1.00 |    0.03 |   2,053 B |
+// | UseVectors     | 1024  |    492.3 us |   9.74 us |  15.72 us |  0.44 |    0.02 |   4,505 B |
+// | UseVectorsArgs | 1024  |    238.9 us |   3.14 us |   2.94 us |  0.22 |    0.00 |   4,234 B |
+// |                |       |             |           |           |       |         |           |
+// | Scalar         | 2048  |  4,430.0 us |  87.93 us |  94.08 us |  1.00 |    0.03 |   2,053 B |
+// | UseVectors     | 2048  |  2,319.6 us |  18.62 us |  17.41 us |  0.52 |    0.01 |   4,505 B |
+// | UseVectorsArgs | 2048  |  1,793.2 us |  34.57 us |  33.95 us |  0.40 |    0.01 |   4,234 B |
+// |                |       |             |           |           |       |         |           |
+// | Scalar         | 4096  | 16,536.4 us | 329.23 us | 618.37 us |  1.00 |    0.05 |   2,053 B |
+// | UseVectors     | 4096  |  9,040.4 us | 104.73 us |  97.96 us |  0.55 |    0.02 |   4,490 B |
+// | UseVectorsArgs | 4096  |  6,728.0 us | 120.28 us | 133.69 us |  0.41 |    0.02 |   4,219 B |
 
 // -- `.NET7.0` on X86
+//Vectors.Instance:       VectorTraits256Avx2     // Avx, Avx2, Sse, Sse2
+//YShuffleX3Kernel_AcceleratedTypes:      SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
+//
+//BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
+//AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+//.NET SDK 8.0.403
+//  [Host]     : .NET 7.0.20 (7.0.2024.26716), X64 RyuJIT AVX2
+//  DefaultJob : .NET 7.0.20 (7.0.2024.26716), X64 RyuJIT AVX2
+//
+//
+//| Method         | Width | Mean        | Error     | StdDev    | Ratio | RatioSD | Code Size |
+//|--------------- |------ |------------:|----------:|----------:|------:|--------:|----------:|
+//| Scalar         | 1024  |  1,120.3 us |  22.39 us |  25.78 us |  1.00 |    0.03 |   1,673 B |
+//| UseVectors     | 1024  |    236.7 us |   4.63 us |   5.69 us |  0.21 |    0.01 |   3,724 B |
+//| UseVectorsArgs | 1024  |    209.5 us |   4.00 us |   4.45 us |  0.19 |    0.01 |   4,031 B |
+//|                |       |             |           |           |       |         |           |
+//| Scalar         | 2048  |  4,431.6 us |  65.38 us |  61.16 us |  1.00 |    0.02 |   1,673 B |
+//| UseVectors     | 2048  |  1,866.8 us |  36.26 us |  48.41 us |  0.42 |    0.01 |   3,724 B |
+//| UseVectorsArgs | 2048  |  1,889.9 us |  37.54 us |  74.97 us |  0.43 |    0.02 |   4,031 B |
+//|                |       |             |           |           |       |         |           |
+//| Scalar         | 4096  | 16,617.9 us | 329.75 us | 559.94 us |  1.00 |    0.05 |   1,673 B |
+//| UseVectors     | 4096  |  6,337.2 us |  62.08 us |  55.03 us |  0.38 |    0.01 |   3,709 B |
+//| UseVectorsArgs | 4096  |  6,408.1 us | 126.27 us | 118.11 us |  0.39 |    0.01 |   4,016 B |
+
+// -- `.NET8.0` on X86
+// Vectors.Instance:       VectorTraits256Avx2     // Avx, Avx2, Sse, Sse2, Avx512VL
+// YShuffleX3Kernel_AcceleratedTypes:      SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
+// 
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+// .NET SDK 8.0.403
+//   [Host]     : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+//   DefaultJob : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+// 
+// 
+// | Method         | Width | Mean        | Error      | StdDev     | Ratio | RatioSD |
+// |--------------- |------ |------------:|-----------:|-----------:|------:|--------:|
+// | Scalar         | 1024  |   549.22 us |  10.876 us |  11.637 us |  1.00 |    0.03 |
+// | UseVectors     | 1024  |    68.21 us |   1.326 us |   2.142 us |  0.12 |    0.00 |
+// | UseVectorsArgs | 1024  |    68.71 us |   1.360 us |   2.453 us |  0.13 |    0.01 |
+// |                |       |             |            |            |       |         |
+// | Scalar         | 2048  | 2,704.83 us |  53.643 us |  92.531 us |  1.00 |    0.05 |
+// | UseVectors     | 2048  | 1,014.52 us |   8.824 us |   7.822 us |  0.38 |    0.01 |
+// | UseVectorsArgs | 2048  | 1,020.66 us |  15.739 us |  14.723 us |  0.38 |    0.01 |
+// |                |       |             |            |            |       |         |
+// | Scalar         | 4096  | 9,778.60 us | 114.022 us | 106.656 us |  1.00 |    0.01 |
+// | UseVectors     | 4096  | 4,360.43 us |  60.832 us |  56.903 us |  0.45 |    0.01 |
+// | UseVectorsArgs | 4096  | 4,341.89 us |  82.877 us | 101.780 us |  0.44 |    0.01 |
 
 // -- `.NET Framework` on X86
+// Vectors.Instance:       VectorTraits256Base     //
+// YShuffleX3Kernel_AcceleratedTypes:      None
+// 
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+//   [Host]     : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+//   DefaultJob : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+// 
+// 
+// | Method         | Width | Mean        | Error       | StdDev      | Ratio | RatioSD | Code Size |
+// |--------------- |------ |------------:|------------:|------------:|------:|--------:|----------:|
+// | Scalar         | 1024  |    999.7 us |    14.16 us |    11.82 us |  1.00 |    0.02 |   2,717 B |
+// | UseVectors     | 1024  |  6,040.0 us |    57.76 us |    54.03 us |  6.04 |    0.09 |        NA |
+// | UseVectorsArgs | 1024  |  5,896.4 us |   105.77 us |    98.94 us |  5.90 |    0.12 |        NA |
+// |                |       |             |             |             |       |         |           |
+// | Scalar         | 2048  |  4,267.0 us |    74.72 us |    69.90 us |  1.00 |    0.02 |   2,717 B |
+// | UseVectors     | 2048  | 23,070.7 us |   250.11 us |   221.72 us |  5.41 |    0.10 |        NA |
+// | UseVectorsArgs | 2048  | 23,106.7 us |   241.23 us |   201.44 us |  5.42 |    0.10 |        NA |
+// |                |       |             |             |             |       |         |           |
+// | Scalar         | 4096  | 15,977.6 us |   308.91 us |   489.96 us |  1.00 |    0.04 |   2,717 B |
+// | UseVectors     | 4096  | 91,944.4 us | 1,152.83 us | 1,078.36 us |  5.76 |    0.19 |        NA |
+// | UseVectorsArgs | 4096  | 92,677.3 us | 1,555.69 us | 1,527.90 us |  5.81 |    0.20 |        NA |
