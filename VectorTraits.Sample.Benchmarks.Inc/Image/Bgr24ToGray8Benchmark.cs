@@ -1,4 +1,4 @@
-﻿//#undef BENCHMARKS_OFF
+﻿#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -109,8 +109,8 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             // Check.
             bool allowCheck = true;
             if (allowCheck) {
+                TextWriter writer = Console.Out;
                 try {
-                    TextWriter writer = Console.Out;
                     long totalDifference, countByteDifference;
                     int maxDifference;
                     double averageDifference;
@@ -126,6 +126,18 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVector128s: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #endif // NETCOREAPP3_0_OR_GREATER
+#if NET8_0_OR_GREATER
+                    // UseVector512s
+                    try {
+                        UseVector512s();
+                        totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                        averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                        percentDifference = 100.0 * countByteDifference / totalByte;
+                        writer.WriteLine(string.Format("Difference of UseVector512s: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    } catch (Exception ex1) {
+                        writer.WriteLine("UseVector512s: " + ex1.ToString());
+                    }
+#endif // NET8_0_OR_GREATER
                     // UseVectors
                     UseVectors();
                     totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
@@ -158,14 +170,38 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     writer.WriteLine(string.Format("Difference of PeterParallelScalar: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
 #if NETCOREAPP3_0_OR_GREATER
                     // PeterParallelScalar
-                    PeterParallelSimd();
-                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
-                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
-                    percentDifference = 100.0 * countByteDifference / totalByte;
-                    writer.WriteLine(string.Format("Difference of PeterParallelSimd: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    try {
+                        PeterParallelSimd();
+                        totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                        averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                        percentDifference = 100.0 * countByteDifference / totalByte;
+                        writer.WriteLine(string.Format("Difference of PeterParallelSimd: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    } catch (Exception ex1) {
+                        writer.WriteLine("PeterParallelSimd: " + ex1.ToString());
+                    }
+                    // RGB2Y_Sse
+                    try {
+                        RGB2Y_Sse();
+                        totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                        averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                        percentDifference = 100.0 * countByteDifference / totalByte;
+                        writer.WriteLine(string.Format("Difference of RGB2Y_Sse: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    } catch (Exception ex1) {
+                        writer.WriteLine("RGB2Y_Sse: " + ex1.ToString());
+                    }
+                    // RGB2Y_Avx
+                    try {
+                        RGB2Y_Avx();
+                        totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                        averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                        percentDifference = 100.0 * countByteDifference / totalByte;
+                        writer.WriteLine(string.Format("Difference of RGB2Y_Avx: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    } catch (Exception ex1) {
+                        writer.WriteLine("RGB2Y_Avx: " + ex1.ToString());
+                    }
 #endif // NETCOREAPP3_0_OR_GREATER
                 } catch (Exception ex) {
-                    Debug.WriteLine(ex.ToString());
+                    writer.WriteLine(ex.ToString());
                 }
             }
             // Debug break.
@@ -262,7 +298,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             UseVector128sDo(_sourceBitmapData, _destinationBitmapData, false);
         }
 
-        //[Benchmark]
+        // [Benchmark]
         public void UseVector128sParallel() {
             UseVector128sDo(_sourceBitmapData, _destinationBitmapData, true);
         }
@@ -354,6 +390,107 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         }
 
 #endif // NETCOREAPP3_0_OR_GREATER
+
+#if NET8_0_OR_GREATER
+
+        [Benchmark]
+        public void UseVector512s() {
+            UseVector512sDo(_sourceBitmapData, _destinationBitmapData, false);
+        }
+
+        // [Benchmark]
+        public void UseVector512sParallel() {
+            UseVector512sDo(_sourceBitmapData, _destinationBitmapData, true);
+        }
+
+        public static unsafe void UseVector512sDo(BitmapData src, BitmapData dst, bool useParallel = false) {
+            if (!Vector512s.IsHardwareAccelerated) throw new NotSupportedException("Vector512 does not have hardware acceleration!");
+            int vectorWidth = Vector512<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            int processorCount = Environment.ProcessorCount;
+            int batchSize = height / (processorCount * 2);
+            bool allowParallel = useParallel && (batchSize > 0) && (processorCount > 1);
+            if (allowParallel) {
+                int batchCount = (height + batchSize - 1) / batchSize; // ceil((double)length / batchSize)
+                Parallel.For(0, batchCount, i => {
+                    int start = batchSize * i;
+                    int len = batchSize;
+                    if (start + len > height) len = height - start;
+                    byte* pSrc2 = pSrc + start * strideSrc;
+                    byte* pDst2 = pDst + start * strideDst;
+                    UseVector512sDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
+                });
+            } else {
+                UseVector512sDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+            }
+        }
+
+        public static unsafe void UseVector512sDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
+            const int cbPixel = 3; // Bgr24
+            const int shiftPoint = 8;
+            const int mulPoint = 1 << shiftPoint; // 0x100
+            const ushort mulRed = (ushort)(0.299 * mulPoint + 0.5); // 77
+            const ushort mulGreen = (ushort)(0.587 * mulPoint + 0.5); // 150
+            const ushort mulBlue = mulPoint - mulRed - mulGreen; // 29
+            Vector512<ushort> vmulRed = Vector512.Create((ushort)mulRed);
+            Vector512<ushort> vmulGreen = Vector512.Create((ushort)mulGreen);
+            Vector512<ushort> vmulBlue = Vector512.Create((ushort)mulBlue);
+            int Vector512Width = Vector512<byte>.Count;
+            int maxX = width - Vector512Width;
+            byte* pRow = pSrc;
+            byte* qRow = pDst;
+            for (int i = 0; i < height; i++) {
+                Vector512<byte>* pLast = (Vector512<byte>*)(pRow + maxX * cbPixel);
+                Vector512<byte>* qLast = (Vector512<byte>*)(qRow + maxX * 1);
+                Vector512<byte>* p = (Vector512<byte>*)pRow;
+                Vector512<byte>* q = (Vector512<byte>*)qRow;
+                for (; ; ) {
+                    Vector512<byte> r, g, b, gray;
+                    Vector512<ushort> wr0, wr1, wg0, wg1, wb0, wb1;
+                    // Load.
+                    b = Vector512s.YGroup3Unzip(p[0], p[1], p[2], out g, out r);
+                    // widen(r) * mulRed + widen(g) * mulGreen + widen(b) * mulBlue
+                    Vector512s.Widen(r, out wr0, out wr1);
+                    Vector512s.Widen(g, out wg0, out wg1);
+                    Vector512s.Widen(b, out wb0, out wb1);
+                    wr0 = Vector512s.Multiply(wr0, vmulRed);
+                    wr1 = Vector512s.Multiply(wr1, vmulRed);
+                    wg0 = Vector512s.Multiply(wg0, vmulGreen);
+                    wg1 = Vector512s.Multiply(wg1, vmulGreen);
+                    wb0 = Vector512s.Multiply(wb0, vmulBlue);
+                    wb1 = Vector512s.Multiply(wb1, vmulBlue);
+                    wr0 = Vector512s.Add(wr0, wg0);
+                    wr1 = Vector512s.Add(wr1, wg1);
+                    wr0 = Vector512s.Add(wr0, wb0);
+                    wr1 = Vector512s.Add(wr1, wb1);
+                    // Shift right and narrow.
+                    wr0 = Vector512s.ShiftRightLogical_Const(wr0, shiftPoint);
+                    wr1 = Vector512s.ShiftRightLogical_Const(wr1, shiftPoint);
+                    gray = Vector512s.Narrow(wr0, wr1);
+                    // Store.
+                    *q = gray;
+                    // Next.
+                    if (p >= pLast) break;
+                    p += cbPixel;
+                    ++q;
+                    if (p > pLast) p = pLast; // The last block is also use vector.
+                    if (q > qLast) q = qLast;
+                }
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+        }
+
+#endif // NET8_0_OR_GREATER
 
         [Benchmark]
         public void UseVectors() {
@@ -456,7 +593,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             UseVectorsX2Do(_sourceBitmapData, _destinationBitmapData, false);
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void UseVectorsX2Parallel() {
             UseVectorsX2Do(_sourceBitmapData, _destinationBitmapData, true);
         }
@@ -669,6 +806,334 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 #endif // NETCOREAPP3_0_OR_GREATER
 
         }
+
+        // == From komrad36. https://github.com/komrad36/RGB2Y
+
+#if NETCOREAPP3_0_OR_GREATER
+
+        [Benchmark]
+        public unsafe void RGB2Y_Sse() {
+            if (!Sse2.IsSupported) throw new NotSupportedException("Not support X86's Sse2!");
+            int vectorWidth = Vector<byte>.Count;
+            var src = _sourceBitmapData;
+            var dst = _destinationBitmapData;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            RGB2Y.RGB2Y_Sse(pSrc, pDst, width, height, strideSrc, strideDst);
+        }
+
+        [Benchmark]
+        public unsafe void RGB2Y_Avx() {
+            if (!Sse2.IsSupported || !Avx2.IsSupported) throw new NotSupportedException("Not support X86's Sse2, Avx2!");
+            int vectorWidth = Vector<byte>.Count;
+            var src = _sourceBitmapData;
+            var dst = _destinationBitmapData;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            RGB2Y.RGB2Y_Avx(pSrc, width, height, strideSrc, pDst, strideDst);
+        }
+
+        /// <summary>
+        /// From komrad36 - RGB2Y. https://github.com/komrad36/RGB2Y
+        /// </summary>
+        static class RGB2Y {
+            // -- SSE2
+            // void RGB2Y_Sse(unsigned char *Src, unsigned char *Dest, int Width, int Height, int Stride) {
+            //     const int B_WT = int(0.114 * 256 + 0.5);
+            //     const int G_WT = int(0.587 * 256 + 0.5);
+            //     const int R_WT = 256 - B_WT - G_WT; // int(0.299 * 256 + 0.5)
+            //     for (int Y = 0; Y < Height; Y++) {
+            //         unsigned char *LinePS = Src + Y * Stride;
+            //         unsigned char *LinePD = Dest + Y * Width;
+            //         int X = 0;
+            //         for (; X < Width - 12; X += 12, LinePS += 36) {
+            //             __m128i p1aL = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 0))), _mm_setr_epi16(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT)); //1
+            //             __m128i p2aL = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 1))), _mm_setr_epi16(G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT)); //2
+            //             __m128i p3aL = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 2))), _mm_setr_epi16(R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT)); //3
+            //             __m128i p1aH = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 8))), _mm_setr_epi16(R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT));
+            //             __m128i p2aH = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 9))), _mm_setr_epi16(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT));
+            //             __m128i p3aH = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 10))), _mm_setr_epi16(G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT));
+            //             __m128i p1bL = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 18))), _mm_setr_epi16(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT));
+            //             __m128i p2bL = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 19))), _mm_setr_epi16(G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT));
+            //             __m128i p3bL = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 20))), _mm_setr_epi16(R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT));
+            //             __m128i p1bH = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 26))), _mm_setr_epi16(R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT));
+            //             __m128i p2bH = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 27))), _mm_setr_epi16(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT));
+            //             __m128i p3bH = _mm_mullo_epi16(_mm_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(LinePS + 28))), _mm_setr_epi16(G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT));
+            //             __m128i sumaL = _mm_add_epi16(p3aL, _mm_add_epi16(p1aL, p2aL));
+            //             __m128i sumaH = _mm_add_epi16(p3aH, _mm_add_epi16(p1aH, p2aH));
+            //             __m128i sumbL = _mm_add_epi16(p3bL, _mm_add_epi16(p1bL, p2bL));
+            //             __m128i sumbH = _mm_add_epi16(p3bH, _mm_add_epi16(p1bH, p2bH));
+            //             __m128i sclaL = _mm_srli_epi16(sumaL, 8);
+            //             __m128i sclaH = _mm_srli_epi16(sumaH, 8);
+            //             __m128i sclbL = _mm_srli_epi16(sumbL, 8);
+            //             __m128i sclbH = _mm_srli_epi16(sumbH, 8);
+            //             __m128i shftaL = _mm_shuffle_epi8(sclaL, _mm_setr_epi8(0, 6, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
+            //             __m128i shftaH = _mm_shuffle_epi8(sclaH, _mm_setr_epi8(-1, -1, -1, 18, 24, 30, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
+            //             __m128i shftbL = _mm_shuffle_epi8(sclbL, _mm_setr_epi8(-1, -1, -1, -1, -1, -1, 0, 6, 12, -1, -1, -1, -1, -1, -1, -1));
+            //             __m128i shftbH = _mm_shuffle_epi8(sclbH, _mm_setr_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, 18, 24, 30, -1, -1, -1, -1));
+            //             __m128i accumL = _mm_or_si128(shftaL, shftbL);
+            //             __m128i accumH = _mm_or_si128(shftaH, shftbH);
+            //             __m128i h3 = _mm_or_si128(accumL, accumH);
+            //             //__m128i h3 = _mm_blendv_epi8(accumL, accumH, _mm_setr_epi8(0, 0, 0, -1, -1, -1, 0, 0, 0, -1, -1, -1, 1, 1, 1, 1));
+            //             _mm_storeu_si128((__m128i *)(LinePD + X), h3);
+            //         }
+            //         for (; X < Width; X++, LinePS += 3) {
+            //             LinePD[X] = (B_WT * LinePS[0] + G_WT * LinePS[1] + R_WT * LinePS[2]) >> 8;
+            //         }
+            //     }
+            // }
+
+            public static unsafe void RGB2Y_Sse(byte* Src, byte* Dest, int Width, int Height, int Stride, int strideDst) {
+                const int B_WT = (int)(0.114 * 256 + 0.5);
+                const int G_WT = (int)(0.587 * 256 + 0.5);
+                const int R_WT = 256 - B_WT - G_WT; // int(0.299 * 256 + 0.5)
+                for (int Y = 0; Y < Height; Y++) {
+                    byte* LinePS = Src + Y * Stride;
+                    byte* LinePD = Dest + Y * strideDst;
+                    int X = 0;
+                    for (; X < Width - 12; X += 12, LinePS += 36) {
+                        var p1aL = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 0))), Vector128.Create(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT)); //1
+                        var p2aL = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 1))), Vector128.Create(G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT)); //2
+                        var p3aL = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 2))), Vector128.Create(R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT)); //3
+                        var p1aH = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 8))), Vector128.Create(R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT));
+                        var p2aH = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 9))), Vector128.Create(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT));
+                        var p3aH = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 10))), Vector128.Create(G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT));
+                        var p1bL = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 18))), Vector128.Create(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT));
+                        var p2bL = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 19))), Vector128.Create(G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT));
+                        var p3bL = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 20))), Vector128.Create(R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT));
+                        var p1bH = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 26))), Vector128.Create(R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT));
+                        var p2bH = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 27))), Vector128.Create(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT));
+                        var p3bH = Sse2.MultiplyLow(Sse41.ConvertToVector128Int16(Sse2.LoadVector128((LinePS + 28))), Vector128.Create(G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT));
+                        var sumaL = Sse2.Add(p3aL, Sse2.Add(p1aL, p2aL));
+                        var sumaH = Sse2.Add(p3aH, Sse2.Add(p1aH, p2aH));
+                        var sumbL = Sse2.Add(p3bL, Sse2.Add(p1bL, p2bL));
+                        var sumbH = Sse2.Add(p3bH, Sse2.Add(p1bH, p2bH));
+                        var sclaL = Sse2.ShiftRightLogical(sumaL, 8);
+                        var sclaH = Sse2.ShiftRightLogical(sumaH, 8);
+                        var sclbL = Sse2.ShiftRightLogical(sumbL, 8);
+                        var sclbH = Sse2.ShiftRightLogical(sumbH, 8);
+                        var shftaL = Ssse3.Shuffle(sclaL.AsByte(), Vector128.Create(0, 6, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1).AsByte());
+                        var shftaH = Ssse3.Shuffle(sclaH.AsByte(), Vector128.Create(-1, -1, -1, 18, 24, 30, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1).AsByte());
+                        var shftbL = Ssse3.Shuffle(sclbL.AsByte(), Vector128.Create(-1, -1, -1, -1, -1, -1, 0, 6, 12, -1, -1, -1, -1, -1, -1, -1).AsByte());
+                        var shftbH = Ssse3.Shuffle(sclbH.AsByte(), Vector128.Create(-1, -1, -1, -1, -1, -1, -1, -1, -1, 18, 24, 30, -1, -1, -1, -1).AsByte());
+                        var accumL = Sse2.Or(shftaL, shftbL);
+                        var accumH = Sse2.Or(shftaH, shftbH);
+                        var h3 = Sse2.Or(accumL, accumH);
+                        //__m128i h3 = _mm_blendv_epi8(accumL, accumH, _mm_setr_epi8(0, 0, 0, -1, -1, -1, 0, 0, 0, -1, -1, -1, 1, 1, 1, 1));
+                        Sse2.Store((LinePD + X), h3);
+                    }
+                    for (; X < Width; X++, LinePS += 3) {
+                        LinePD[X] = (byte)((B_WT * LinePS[0] + G_WT * LinePS[1] + R_WT * LinePS[2]) >> 8);
+                    }
+                }
+            }
+
+            // -- AVX2
+            // https://github.com/komrad36/RGB2Y/blob/master/RGB2Y.h // Commits on Sep 30, 2018
+
+            // Set your weights here.
+            // constexpr double B_WEIGHT = 0.114;
+            // constexpr double G_WEIGHT = 0.587;
+            // constexpr double R_WEIGHT = 0.299;
+            const double B_WEIGHT = 0.114;
+            const double G_WEIGHT = 0.587;
+            const double R_WEIGHT = 0.299;
+
+            // constexpr uint16_t B_WT = static_cast<uint16_t>(32768.0 * B_WEIGHT + 0.5);
+            // constexpr uint16_t G_WT = static_cast<uint16_t>(32768.0 * G_WEIGHT + 0.5);
+            // constexpr uint16_t R_WT = static_cast<uint16_t>(32768.0 * R_WEIGHT + 0.5);
+            const short B_WT = (short)(32768.0 * B_WEIGHT + 0.5);
+            const short G_WT = (short)(32768.0 * G_WEIGHT + 0.5);
+            const short R_WT = (short)(32768.0 * R_WEIGHT + 0.5);
+
+            // static const __m256i weight_vec = _mm256_setr_epi16(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT);
+            private static readonly Vector256<short> weight_vec = Vector256.Create(B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT, G_WT, R_WT, B_WT);
+
+            // The weight alway use true.
+            const bool weight = true;
+
+            // template<bool last_row_and_col, bool weight>
+            // void process(const uint8_t* __restrict const pt, const int32_t cols_minus_j, uint8_t* const __restrict out) {
+            // 	__m128i h3;
+            // 	if (weight) {
+            // 		__m256i in1 = _mm256_mulhrs_epi16(_mm256_cvtepu8_epi16(_mm_loadu_si128((const __m128i*)(pt))), weight_vec);
+            // 		__m256i in2 = _mm256_mulhrs_epi16(_mm256_cvtepu8_epi16(_mm_loadu_si128((const __m128i*)(pt + 15))), weight_vec);
+            // 		__m256i mul = _mm256_packus_epi16(in1, in2);
+            // 		__m256i b1 = _mm256_shuffle_epi8(mul, _mm256_setr_epi8(0, 3, 6, -1, -1, -1, 11, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 4, 7, -1, -1, 9, 12, -1, -1, -1, -1, -1, -1));
+            // 		__m256i g1 = _mm256_shuffle_epi8(mul, _mm256_setr_epi8(1, 4, 7, -1, -1, 9, 12, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 5, -1, -1, -1, 10, 13, -1, -1, -1, -1, -1, -1));
+            // 		__m256i r1 = _mm256_shuffle_epi8(mul, _mm256_setr_epi8(2, 5, -1, -1, -1, 10, 13, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 3, 6, -1, -1, 8, 11, 14, -1, -1, -1, -1, -1, -1));
+            // 		__m256i accum = _mm256_adds_epu8(r1, _mm256_adds_epu8(b1, g1));
+            // 		h3 = _mm_adds_epu8(_mm256_castsi256_si128(accum), _mm256_extracti128_si256(accum, 1));
+            // 	}
+            // 	else {
+            // 		__m256i in1 = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)(pt)));
+            // 		in1 = _mm256_inserti128_si256(in1, _mm_loadu_si128((const __m128i*)(pt + 15)), 1);
+            // 		__m256i b1 = _mm256_shuffle_epi8(in1, _mm256_setr_epi8(0, -1, 3, -1, 6, -1, 9, -1, 12, -1, -1, -1, -1, -1, -1, -1, 0, -1, 3, -1, 6, -1, 9, -1, 12, -1, -1, -1, -1, -1, -1, -1));
+            // 		__m256i g1 = _mm256_shuffle_epi8(in1, _mm256_setr_epi8(1, -1, 4, -1, 7, -1, 10, -1, 13, -1, -1, -1, -1, -1, -1, -1, 1, -1, 4, -1, 7, -1, 10, -1, 13, -1, -1, -1, -1, -1, -1, -1));
+            // 		__m256i r1 = _mm256_shuffle_epi8(in1, _mm256_setr_epi8(2, -1, 5, -1, 8, -1, 11, -1, 14, -1, -1, -1, -1, -1, -1, -1, 2, -1, 5, -1, 8, -1, 11, -1, 14, -1, -1, -1, -1, -1, -1, -1));
+            // 		__m256i sum = _mm256_adds_epu16(r1, _mm256_adds_epu16(b1, g1));
+            // 		__m256i accum = _mm256_mulhrs_epi16(sum, _mm256_set1_epi16(10923));
+            // 		__m256i shuf = _mm256_shuffle_epi8(accum, _mm256_setr_epi8(0, 2, 4, 6, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 2, 4, 6, 8, -1, -1, -1, -1, -1, -1));
+            // 		h3 = _mm_or_si128(_mm256_extracti128_si256(shuf, 1), _mm256_castsi256_si128(shuf));
+            // 	}
+            // 	if (last_row_and_col) {
+            // 		switch (cols_minus_j) {
+            // 		case 15:
+            // 			out[14] = static_cast<uint8_t>(_mm_extract_epi8(h3, 14));
+            // 		case 14:
+            // 			out[13] = static_cast<uint8_t>(_mm_extract_epi8(h3, 13));
+            // 		case 13:
+            // 			out[12] = static_cast<uint8_t>(_mm_extract_epi8(h3, 12));
+            // 		case 12:
+            // 			out[11] = static_cast<uint8_t>(_mm_extract_epi8(h3, 11));
+            // 		case 11:
+            // 			out[10] = static_cast<uint8_t>(_mm_extract_epi8(h3, 10));
+            // 		case 10:
+            // 			out[9] = static_cast<uint8_t>(_mm_extract_epi8(h3, 9));
+            // 		case 9:
+            // 			out[8] = static_cast<uint8_t>(_mm_extract_epi8(h3, 8));
+            // 		case 8:
+            // 			out[7] = static_cast<uint8_t>(_mm_extract_epi8(h3, 7));
+            // 		case 7:
+            // 			out[6] = static_cast<uint8_t>(_mm_extract_epi8(h3, 6));
+            // 		case 6:
+            // 			out[5] = static_cast<uint8_t>(_mm_extract_epi8(h3, 5));
+            // 		case 5:
+            // 			out[4] = static_cast<uint8_t>(_mm_extract_epi8(h3, 4));
+            // 		case 4:
+            // 			out[3] = static_cast<uint8_t>(_mm_extract_epi8(h3, 3));
+            // 		case 3:
+            // 			out[2] = static_cast<uint8_t>(_mm_extract_epi8(h3, 2));
+            // 		case 2:
+            // 			out[1] = static_cast<uint8_t>(_mm_extract_epi8(h3, 1));
+            // 		case 1:
+            // 			out[0] = static_cast<uint8_t>(_mm_extract_epi8(h3, 0));
+            // 		}
+            // 	}
+            // 	else {
+            // 		_mm_storeu_si128(reinterpret_cast<__m128i*>(out), h3);
+            // 	}
+            // }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static unsafe void process(byte* pt, int cols_minus_j, byte* pout, bool last_row_and_col) {
+                Vector128<byte> h3;
+                if (weight) {
+                    var in1 = Avx2.MultiplyHighRoundScale(Avx2.ConvertToVector256Int16(Sse2.LoadVector128((pt))), weight_vec);
+                    var in2 = Avx2.MultiplyHighRoundScale(Avx2.ConvertToVector256Int16(Sse2.LoadVector128((pt + 15))), weight_vec);
+                    var mul = Avx2.PackUnsignedSaturate(in1, in2);
+                    var b1 = Avx2.Shuffle(mul, Vector256.Create(0, 3, 6, -1, -1, -1, 11, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 4, 7, -1, -1, 9, 12, -1, -1, -1, -1, -1, -1).AsByte());
+                    var g1 = Avx2.Shuffle(mul, Vector256.Create(1, 4, 7, -1, -1, 9, 12, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 5, -1, -1, -1, 10, 13, -1, -1, -1, -1, -1, -1).AsByte());
+                    var r1 = Avx2.Shuffle(mul, Vector256.Create(2, 5, -1, -1, -1, 10, 13, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 3, 6, -1, -1, 8, 11, 14, -1, -1, -1, -1, -1, -1).AsByte());
+                    var accum = Avx2.AddSaturate(r1, Avx2.AddSaturate(b1, g1));
+                    h3 = Sse2.AddSaturate(accum.GetLower(), Avx2.ExtractVector128(accum, 1));
+                } else {
+                    //__m256i in1 = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)(pt)));
+                    //in1 = _mm256_inserti128_si256(in1, _mm_loadu_si128((const __m128i*)(pt + 15)), 1);
+                    //__m256i b1 = _mm256_shuffle_epi8(in1, _mm256_setr_epi8(0, -1, 3, -1, 6, -1, 9, -1, 12, -1, -1, -1, -1, -1, -1, -1, 0, -1, 3, -1, 6, -1, 9, -1, 12, -1, -1, -1, -1, -1, -1, -1));
+                    //__m256i g1 = _mm256_shuffle_epi8(in1, _mm256_setr_epi8(1, -1, 4, -1, 7, -1, 10, -1, 13, -1, -1, -1, -1, -1, -1, -1, 1, -1, 4, -1, 7, -1, 10, -1, 13, -1, -1, -1, -1, -1, -1, -1));
+                    //__m256i r1 = _mm256_shuffle_epi8(in1, _mm256_setr_epi8(2, -1, 5, -1, 8, -1, 11, -1, 14, -1, -1, -1, -1, -1, -1, -1, 2, -1, 5, -1, 8, -1, 11, -1, 14, -1, -1, -1, -1, -1, -1, -1));
+                    //__m256i sum = _mm256_adds_epu16(r1, _mm256_adds_epu16(b1, g1));
+                    //__m256i accum = _mm256_mulhrs_epi16(sum, _mm256_set1_epi16(10923));
+                    //__m256i shuf = _mm256_shuffle_epi8(accum, _mm256_setr_epi8(0, 2, 4, 6, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 2, 4, 6, 8, -1, -1, -1, -1, -1, -1));
+                    //h3 = _mm_or_si128(_mm256_extracti128_si256(shuf, 1), _mm256_castsi256_si128(shuf));
+                }
+                if (last_row_and_col) {
+                    if (0 < cols_minus_j && cols_minus_j < 16) {
+                        Buffer.MemoryCopy(&h3, pout, cols_minus_j, cols_minus_j);
+                    }
+                } else {
+                    Sse2.Store(pout, h3);
+                }
+            }
+
+            // template<bool last_row, bool weight>
+            // void processRow(const uint8_t* __restrict pt, const int32_t cols, uint8_t* const __restrict out) {
+            // 	int j = 0;
+            // 	for (; j < cols - 10; j += 10, pt += 30) {
+            // 		process<false, weight>(pt, cols - j, out + j);
+            // 	}
+            // 	process<last_row, weight>(pt, cols - j, out + j);
+            // }
+
+            public static unsafe void processRow(byte* pt, int cols, byte* pout, bool last_row) {
+	            int j = 0;
+	            for (; j < cols - 10; j += 10, pt += 30) {
+		            process(pt, cols - j, pout + j, false);
+	            }
+                process(pt, cols - j, pout + j, last_row);
+                //process(pt, cols - j, pout + j, true);
+                //const int B_WT = (int)(0.114 * 256 + 0.5);
+                //const int G_WT = (int)(0.587 * 256 + 0.5);
+                //const int R_WT = 256 - B_WT - G_WT; // int(0.299 * 256 + 0.5)
+                //byte* q = pout + j;
+                //for (; j < cols; j++, pt += 3, ++q) {
+                //    *q = (byte)((B_WT * pt[0] + G_WT * pt[1] + R_WT * pt[2]) >> 8);
+                //}
+            }
+
+            // template<bool weight>
+            // void __forceinline _RGB2Y(const uint8_t* __restrict const data, const int32_t cols, const int32_t start_row, const int32_t rows, const int32_t stride, uint8_t* const __restrict out) {
+            // 	int i = start_row;
+            // 	for (; i < start_row + rows - 1; ++i) {
+            // 		processRow<false, weight>(data + 3 * i * stride, cols, out + i * cols);
+            // 	}
+            // 	processRow<true, weight>(data + 3 * i * stride, cols, out + i * cols);
+            // }
+            public static unsafe void _RGB2Y(byte* data, int cols, int start_row, int rows, int stride, byte* pout, int strideDst) {
+	            int i = start_row;
+	            for (; i < (start_row + rows - 1); ++i) {
+		            processRow(data + i * stride, cols, pout + i * strideDst, false);
+	            }
+	            processRow(data + i * stride, cols, pout + i * strideDst, true);
+            }
+
+            // template<bool multithread, bool weight>
+            // void RGB2Y(const uint8_t* const __restrict image, const int width, const int height, const int stride, uint8_t* const __restrict out) {
+            // 	if (multithread) {
+            // 		const int32_t hw_concur = std::min(height >> 4, static_cast<int32_t>(std::thread::hardware_concurrency()));
+            // 		if (hw_concur > 1) {
+            // 			std::vector<std::future<void>> fut(hw_concur);
+            // 			const int thread_stride = (height - 1) / hw_concur + 1;
+            // 			int i = 0, start = 0;
+            // 			for (; i < std::min(height - 1, hw_concur - 1); ++i, start += thread_stride) {
+            // 				fut[i] = std::async(std::launch::async, _RGB2Y<weight>, image, width, start, thread_stride, stride, out);
+            // 			}
+            // 			fut[i] = std::async(std::launch::async, _RGB2Y<weight>, image, width, start, height - start, stride, out);
+            // 			for (int j = 0; j <= i; ++j) fut[j].wait();
+            // 		}
+            // 		else {
+            // 			_RGB2Y<weight>(image, width, 0, height, stride, out);
+            // 		}
+            // 	}
+            // 	else {
+            // 		_RGB2Y<weight>(image, width, 0, height, stride, out);
+            // 	}
+            // }
+
+            public static unsafe void RGB2Y_Avx(byte* image, int width, int height, int stride, byte* pout, int strideDst) {
+                _RGB2Y(image, width, 0, height, stride, pout, strideDst);
+            }
+
+        }
+
+#endif // NETCOREAPP3_0_OR_GREATER
 
     }
 }

@@ -137,9 +137,9 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
             // - Group
             //var target = new SplitLanes4Double() { Count = 1000 };
             // - Image
-            //var target = new Bgr24ToGray8Benchmark() { Width = 1024 };
+            var target = new Bgr24ToGray8Benchmark() { Width = 1024 };
             //var target = new Bgr24ToGrayBgr24Benchmark() { Width = 1024 };
-            var target = new ImageFlipXOn24bitBenchmark() { Width = 1024 };
+            //var target = new ImageFlipXOn24bitBenchmark() { Width = 1024 };
             //var target = new ImageFlipXOn32bitBenchmark() { Width = 1024 };
             //var target = new ImageFlipYBenchmark() { Width = 1024 };
             //var target = new Rgb32ToGray8Benchmark() { Width = 1024 };
