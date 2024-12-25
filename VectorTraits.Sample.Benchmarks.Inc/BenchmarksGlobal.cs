@@ -13,6 +13,7 @@ using System.Runtime.Intrinsics;
 #endif
 using System.Text;
 using Zyl.VectorTraits;
+using Zyl.VectorTraits.Sample.Benchmarks.Complexes;
 using Zyl.VectorTraits.Sample.Benchmarks.Group;
 using Zyl.VectorTraits.Sample.Benchmarks.Image;
 
@@ -134,10 +135,12 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
         /// </summary>
         /// <param name="writer">The TextWriter.</param>
         public static void DoCheck(TextWriter writer = null) {
+            // - Image
+            var target = new ComplexMultiplySumBenchmark() { Count = 65535 };
             // - Group
             //var target = new SplitLanes4Double() { Count = 1000 };
             // - Image
-            var target = new Bgr24ToGray8Benchmark() { Width = 1024 };
+            //var target = new Bgr24ToGray8Benchmark() { Width = 1024 };
             //var target = new Bgr24ToGrayBgr24Benchmark() { Width = 1024 };
             //var target = new ImageFlipXOn24bitBenchmark() { Width = 1024 };
             //var target = new ImageFlipXOn32bitBenchmark() { Width = 1024 };
