@@ -51,8 +51,12 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
                     writer.WriteLine(string.Format("CallMul:\t{0}", expected));
 #if NETCOREAPP3_0_OR_GREATER
                     // CallMul2.
-                    CallMul2();
-                    writer.WriteLine(string.Format("CallMul2:\t{0}", _destination));
+                    try {
+                        CallMul2();
+                        writer.WriteLine(string.Format("CallMul2:\t{0}", _destination));
+                    } catch (Exception ex1) {
+                        writer.WriteLine("CallMul2: " + ex1.Message);
+                    }
 #endif // NETCOREAPP3_0_OR_GREATER
                     // UseVectors.
                     UseVectors();
@@ -74,13 +78,21 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
 #endif // NET8_0_OR_GREATER
 #if NETCOREAPP3_0_OR_GREATER
                     // Hez2010Simd_Mul2.
-                    Hez2010Simd_Mul2();
-                    writer.WriteLine(string.Format("Hez2010Simd_Mul2:\t{0}", _destination));
+                    try {
+                        Hez2010Simd_Mul2();
+                        writer.WriteLine(string.Format("Hez2010Simd_Mul2:\t{0}", _destination));
+                    } catch (Exception ex1) {
+                        writer.WriteLine("Hez2010Simd_Mul2: " + ex1.Message);
+                    }
 #endif // NETCOREAPP3_0_OR_GREATER
 #if NET5_0_OR_GREATER
                     // Hez2010Simd.
-                    Hez2010Simd();
-                    writer.WriteLine(string.Format("Hez2010Simd:\t{0}", _destination));
+                    try {
+                        Hez2010Simd();
+                        writer.WriteLine(string.Format("Hez2010Simd:\t{0}", _destination));
+                    } catch (Exception ex1) {
+                        writer.WriteLine("Hez2010Simd: " + ex1.Message);
+                    }
 #endif // NET5_0_OR_GREATER
                 } catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
@@ -106,6 +118,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
 
         [Benchmark]
         public void CallMul2() {
+            if (!Avx.IsSupported || !Avx2.IsSupported) throw new NotSupportedException("Not support X86's Avx2!");
             _destination = mul2(_array);
         }
 
@@ -288,11 +301,11 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
 
         [Benchmark]
         public void UseVector512sX2() {
+            if (!Vector512s.IsHardwareAccelerated) throw new NotSupportedException("Vector512 does not have hardware acceleration!");
             _destination = UseVector512sX2Do(_array);
         }
 
         public static Complex UseVector512sX2Do(Complex[] numbers) {
-            if (!Vector512s.IsHardwareAccelerated) throw new NotSupportedException("Vector512 does not have hardware acceleration!");
             const int batchWidth = 2; // X2
             int blockWidth = Vector512<double>.Count * batchWidth / 2; // Complex is double*2
             int cntBlock = numbers.Length / blockWidth;
@@ -350,12 +363,14 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
 
         [Benchmark]
         public void Hez2010Simd_Mul2() {
+            if (!Avx.IsSupported || !Avx2.IsSupported) throw new NotSupportedException("Not support X86's Avx2!");
             _destination = Hez2010.Simd_Mul2(_array);
         }
 
 #if NET5_0_OR_GREATER
         [Benchmark]
         public void Hez2010Simd() {
+            if (!Avx.IsSupported || !Avx2.IsSupported) throw new NotSupportedException("Not support X86's Avx2!");
             _destination = Hez2010.Simd(_array);
         }
 #endif // NET5_0_OR_GREATER

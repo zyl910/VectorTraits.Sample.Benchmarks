@@ -2,6 +2,10 @@
 
 ## List
 
+### Complexes (复数)
+
+- `ComplexMultiplySumBenchmark`: Sum of complex multiply (复数乘法求和). C#simd使用Avx类的代码比普通的for循环代码慢，什么原因呢？ https://www.zhihu.com/question/762906402
+
 ### Group (组)
 
 - `SplitLanes4Double`: Deinterleave the Double array and split it into arrays of X, Y, Z, and W (对Double数组进行解交织，拆分出 X,Y,Z,W的数组). How do I optimally fill multiple arrays with SIMDs vectors? https://stackoverflow.com/questions/77984612/how-do-i-optimally-fill-multiple-arrays-with-simds-vectors/
