@@ -46,6 +46,10 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
             if (allowCheck) {
                 try {
                     TextWriter writer = Console.Out;
+                    writer.WriteLine(string.Format("YGroup2Transpose_AcceleratedTypes:\t{0}", Vectors.YGroup2Transpose_AcceleratedTypes));
+                    writer.WriteLine(string.Format("YShuffleG2_AcceleratedTypes:\t{0}", Vectors.YShuffleG2_AcceleratedTypes));
+                    writer.WriteLine(string.Format("YShuffleG4X2_AcceleratedTypes:\t{0}", Vectors.YShuffleG4X2_AcceleratedTypes));
+                    // CallMul.
                     CallMul();
                     Complex expected = _destination;
                     writer.WriteLine(string.Format("CallMul:\t{0}", expected));
@@ -171,14 +175,14 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
                     var e = Vector.Multiply(a, Vector.Xor(c, mask)); // (a*c) + (-b*d)i
                     var f = Vectors.YShuffleG2(c, ShuffleControlG2.YX); // (d) + (c)i
                     f = Vector.Multiply(a, f); // (a*d) + (b*c)i
-                    var g = Vectors.YGroup2Transpose(e, f, out var h); // g is {(a*c) + (a*d)i}; h is {(b*d) + (b*c)i}
+                    var g = Vectors.YGroup2Transpose(e, f, out var h); // g is {(a*c) + (a*d)i}; h is {(-b*d) + (b*c)i}
                     g += h; // (a*c - b*d) + (a*d + b*c)i
                     // Sum
                     acc += g;
                     // Next
                     ++p;
                 }
-                // Vector to scalar Complex.
+                // Vector to a Complex.
                 double re = 0.0, im = 0.0;
                 for (int i = 0; i < Vector<double>.Count; i += 2) {
                     re += acc[i];
@@ -217,14 +221,14 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
                 var e = Vector.Multiply(a, Vector.Xor(c, mask)); // (a*c) + (-b*d)i
                 var f = Vectors.YShuffleG2(c, ShuffleControlG2.YX); // (d) + (c)i
                 f = Vector.Multiply(a, f); // (a*d) + (b*c)i
-                var g = Vectors.YGroup2Transpose(e, f, out var h); // g is {(a*c) + (a*d)i}; h is {(b*d) + (b*c)i}
+                var g = Vectors.YGroup2Transpose(e, f, out var h); // g is {(a*c) + (a*d)i}; h is {(-b*d) + (b*c)i}
                 g += h; // (a*c - b*d) + (a*d + b*c)i
                 // Sum
                 acc += g;
                 // Next
                 p = ref Unsafe.Add(ref p, 1);
             }
-            // Vector to scalar Complex.
+            // Vector to a Complex.
             double re = 0.0, im = 0.0;
             for (int i = 0; i < Vector<double>.Count; i += 2) {
                 re += acc[i];
@@ -268,7 +272,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
                 var f0 = Vectors.YShuffleG4X2_Const(c0, c1, ShuffleControlG4.YXWZ, out var f1); // (d) + (c)i
                 f0 = Vector.Multiply(a0, f0); // (a*d) + (b*c)i
                 f1 = Vector.Multiply(a1, f1);
-                var g0 = Vectors.YGroup2Transpose(e0, f0, out var h0); // g is {(a*c) + (a*d)i}; h is {(b*d) + (b*c)i}
+                var g0 = Vectors.YGroup2Transpose(e0, f0, out var h0); // g is {(a*c) + (a*d)i}; h is {(-b*d) + (b*c)i}
                 var g1 = Vectors.YGroup2Transpose(e1, f1, out var h1);
                 g0 += h0; // (a*c - b*d) + (a*d + b*c)i
                 g1 += h1;
@@ -279,7 +283,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
                 p = ref Unsafe.Add(ref p, batchWidth);
             }
             acc += acc1;
-            // Vector to scalar Complex.
+            // Vector to a Complex.
             double re = 0.0, im = 0.0;
             for (int i = 0; i < Vector<double>.Count; i += 2) {
                 re += acc[i];
@@ -297,7 +301,6 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
         }
 
 #if NET8_0_OR_GREATER
-
 
         [Benchmark]
         public void UseVector512sX2() {
@@ -327,7 +330,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
                 var f0 = Vector512s.YShuffleG4X2_Const(c0, c1, ShuffleControlG4.YXWZ, out var f1); // (d) + (c)i
                 f0 = Vector512s.Multiply(a0, f0); // (a*d) + (b*c)i
                 f1 = Vector512s.Multiply(a1, f1);
-                var g0 = Vector512s.YGroup2Transpose(e0, f0, out var h0); // g is {(a*c) + (a*d)i}; h is {(b*d) + (b*c)i}
+                var g0 = Vector512s.YGroup2Transpose(e0, f0, out var h0); // g is {(a*c) + (a*d)i}; h is {(-b*d) + (b*c)i}
                 var g1 = Vector512s.YGroup2Transpose(e1, f1, out var h1);
                 g0 += h0; // (a*c - b*d) + (a*d + b*c)i
                 g1 += h1;
@@ -338,7 +341,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
                 p = ref Unsafe.Add(ref p, batchWidth);
             }
             acc += acc1;
-            // Vector to scalar Complex.
+            // Vector to a Complex.
             double re = 0.0, im = 0.0;
             for (int i = 0; i < Vector512<double>.Count; i += 2) {
                 re += acc[i];
@@ -357,7 +360,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
 
 #endif // NET8_0_OR_GREATER
 
-        // == From Hez2010. https://www.zhihu.com/question/762906402/answer/63205597712
+        // == From hez2010. https://www.zhihu.com/question/762906402/answer/63205597712
 
 #if NETCOREAPP3_0_OR_GREATER
 
@@ -376,7 +379,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
 #endif // NET5_0_OR_GREATER
 
         /// <summary>
-        /// From Hez2010. https://godbolt.org/z/Kvo9h4YbE
+        /// From hez2010. https://godbolt.org/z/Kvo9h4YbE
         /// </summary>
         static class Hez2010 {
             public static unsafe Complex Simd_Mul2(Complex[] numbers) {
@@ -426,3 +429,43 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Complexes {
 
     }
 }
+
+// == Benchmarks result
+
+// -- `.NET8.0` on Arm
+// BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
+// Apple M2, 1 CPU, 8 logical and 8 physical cores
+// .NET SDK 8.0.204
+//   [Host]     : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+//   DefaultJob : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+// 
+// 
+// | Method           | Count | Mean     | Error    | StdDev   | Ratio | RatioSD |
+// |----------------- |------ |---------:|---------:|---------:|------:|--------:|
+// | CallMul          | 65536 | 56.30 us | 0.051 us | 0.045 us |  1.00 |    0.00 |
+// | CallMul2         | 65536 |       NA |       NA |       NA |     ? |       ? |
+// | UseVectors       | 65536 | 56.90 us | 0.468 us | 0.415 us |  1.01 |    0.01 |
+// | UseVectorsSafe   | 65536 | 56.32 us | 0.019 us | 0.017 us |  1.00 |    0.00 |
+// | UseVectorsX2     | 65536 | 47.18 us | 0.025 us | 0.024 us |  0.84 |    0.00 |
+// | UseVector512sX2  | 65536 |       NA |       NA |       NA |     ? |       ? |
+// | Hez2010Simd_Mul2 | 65536 |       NA |       NA |       NA |     ? |       ? |
+// | Hez2010Simd      | 65536 |       NA |       NA |       NA |     ? |       ? |
+
+// -- `.NET8.0` on X86
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.2605)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+// .NET SDK 9.0.101
+//   [Host]     : .NET 8.0.11 (8.0.1124.51707), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+//   DefaultJob : .NET 8.0.11 (8.0.1124.51707), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+// 
+// 
+// | Method           | Count | Mean     | Error    | StdDev   | Ratio | Code Size |
+// |----------------- |------ |---------:|---------:|---------:|------:|----------:|
+// | CallMul          | 65536 | 44.45 us | 0.329 us | 0.308 us |  1.00 |     128 B |
+// | CallMul2         | 65536 | 92.50 us | 0.104 us | 0.087 us |  2.08 |        NA |
+// | UseVectors       | 65536 | 22.48 us | 0.068 us | 0.061 us |  0.51 |        NA |
+// | UseVectorsSafe   | 65536 | 22.47 us | 0.084 us | 0.070 us |  0.51 |        NA |
+// | UseVectorsX2     | 65536 | 17.95 us | 0.080 us | 0.075 us |  0.40 |        NA |
+// | UseVector512sX2  | 65536 | 17.26 us | 0.179 us | 0.167 us |  0.39 |        NA |
+// | Hez2010Simd_Mul2 | 65536 | 23.69 us | 0.206 us | 0.193 us |  0.53 |        NA |
+// | Hez2010Simd      | 65536 | 23.01 us | 0.151 us | 0.134 us |  0.52 |     298 B |
