@@ -1,4 +1,4 @@
-﻿//#undef BENCHMARKS_OFF
+﻿#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -13,8 +13,6 @@ using System.Runtime.InteropServices;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Security.Cryptography;
-
 #endif
 using System.Text;
 using System.Threading;
@@ -179,6 +177,14 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVectorsArgsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // ImageshopSse
+#if NETCOREAPP3_0_OR_GREATER
+                    ImageshopSse();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of ImageshopSse: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+#endif
                 } catch (Exception ex) {
                     Debug.WriteLine(ex.ToString());
                 }
@@ -459,6 +465,132 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                 qRow += strideDst;
             }
         }
+
+        // == From Imageshop. https://www.cnblogs.com/zyl910/p/18587292/VectorTraits_Sample_Image_ImageFlipXOn24bitBenchmark
+#if NETCOREAPP3_0_OR_GREATER
+
+        [Benchmark]
+        public unsafe void ImageshopSse() {
+            Imageshop.IM_FlipLeftRight((byte*)_sourceBitmapData.Scan0, (byte*)_destinationBitmapData.Scan0, _sourceBitmapData.Width, _sourceBitmapData.Height, _sourceBitmapData.Stride);
+        }
+
+        /// <summary>
+        /// From Imageshop. https://www.cnblogs.com/zyl910/p/18587292/VectorTraits_Sample_Image_ImageFlipXOn24bitBenchmark
+        /// </summary>
+        internal static class Imageshop {
+            const int IM_STATUS_OK = 0;
+            const int IM_STATUS_OUTOFMEMORY = -1;
+
+            // -- SSSE3
+            // int IM_FlipLeftRight(unsigned char *Src, unsigned char *Dest, int Width, int Height, int Stride) {
+            //     int Channel = Stride / Width;
+            //     unsigned char *Buffer = NULL;
+            //     if (Src == Dest) {
+            //         Buffer = (unsigned char *)malloc(Width * Channel * sizeof(unsigned char));
+            //         if (Buffer == NULL) return IM_STATUS_OUTOFMEMORY;
+            //     }
+            // 
+            //     if (Channel == 3) {
+            //         int BlockSize = 16;
+            //         int Block = Width / BlockSize;
+            //         __m128i Mask1 = _mm_setr_epi8(13, 14, 15, 10, 11, 12, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0);
+            //         __m128i Mask2 = _mm_setr_epi8(14, 15, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4, 0, 1);
+            //         __m128i Mask3 = _mm_setr_epi8(15, 12, 13, 14, 9, 10, 11, 6, 7, 8, 3, 4, 5, 0, 1, 2);
+            //         for (int Y = 0; Y < Height; Y++) {
+            //             unsigned char *LinePS = NULL;
+            //             if (Src == Dest) {
+            //                 memcpy(Buffer, Src + Y * Stride, Width * 3);
+            //                 LinePS = Buffer + Width * 3;
+            //             } else {
+            //                 LinePS = Src + Y * Stride + Width * 3;
+            //             }
+            // 
+            //             unsigned char *LinePD = Dest + Y * Stride;
+            //             int X = 0;
+            //             for (; X < Block * BlockSize; X += BlockSize, LinePS -= 48, LinePD += 48) {
+            //                 __m128i SrcV1 = _mm_loadu_si128((const __m128i *)(LinePS - 16));
+            //                 SrcV1 = _mm_shuffle_epi8(SrcV1, Mask1);
+            //                 _mm_storeu_si128((__m128i *)(LinePD + 0), SrcV1);
+            //                 __m128i SrcV2 = _mm_loadu_si128((const __m128i *)(LinePS - 32));
+            //                 SrcV2 = _mm_shuffle_epi8(SrcV2, Mask2);
+            //                 _mm_storeu_si128((__m128i *)(LinePD + 16), SrcV2);
+            //                 __m128i SrcV3 = _mm_loadu_si128((const __m128i *)(LinePS - 48));
+            //                 SrcV3 = _mm_shuffle_epi8(SrcV3, Mask3);
+            //                 _mm_storeu_si128((__m128i *)(LinePD + 32), SrcV3);
+            //                 LinePD[15] = LinePS[-18]; LinePD[16] = LinePS[-17]; LinePD[17] = LinePS[-16];
+            //                 LinePD[31] = LinePS[-32]; LinePD[32] = LinePS[-31];
+            //             }
+            //             for (; X < Width; X++, LinePS -= 3, LinePD += 3) {
+            //                 LinePD[0] = LinePS[-3]; LinePD[1] = LinePS[-2]; LinePD[2] = LinePS[-1];
+            //             }
+            //         }
+            //     }
+            // 
+            //     if (Buffer != NULL) free(Buffer);
+            //     return IM_STATUS_OK;
+            // }
+
+            public static unsafe int IM_FlipLeftRight(byte* Src, byte* Dest, int Width, int Height, int Stride) {
+                if (!Sse2.IsSupported) throw new NotSupportedException("Not support X86's Sse2!");
+                if (!Ssse3.IsSupported) throw new NotSupportedException("Not support X86's Ssse3!");
+                int Channel = Stride / Width;
+                byte* Buffer = null;
+                try {
+                    if (Src == Dest) {
+                        Buffer = (byte*)Marshal.AllocHGlobal(Width * Channel);
+                        if (Buffer == null) return IM_STATUS_OUTOFMEMORY;
+                    }
+
+                    if (Channel == 3) {
+                        const int BlockSize = 16;
+                        int Block = Width / BlockSize;
+                        Vector128<byte> Mask1 = Vector128.Create((byte)13, 14, 15, 10, 11, 12, 7, 8, 9, 4, 5, 6, 1, 2, 3, 0);
+                        Vector128<byte> Mask2 = Vector128.Create((byte)14, 15, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4, 0, 1);
+                        Vector128<byte> Mask3 = Vector128.Create((byte)15, 12, 13, 14, 9, 10, 11, 6, 7, 8, 3, 4, 5, 0, 1, 2);
+                        for (int Y = 0; Y < Height; Y++) {
+                            byte* LinePS = null;
+                            if (Src == Dest) {
+                                //memcpy(Buffer, Src + Y * Stride, Width * 3);
+                                System.Buffer.MemoryCopy(Src + Y * Stride, Buffer, Width * 3, Width * 3);
+                                LinePS = Buffer + Width * 3;
+                            } else {
+                                LinePS = Src + Y * Stride + Width * 3;
+                            }
+
+                            byte* LinePD = Dest + Y * Stride;
+                            int X = 0;
+                            for (; X < Block * BlockSize; X += BlockSize, LinePS -= 48, LinePD += 48) {
+                                var SrcV1 = Sse2.LoadVector128(LinePS - 16);
+                                SrcV1 = Ssse3.Shuffle(SrcV1, Mask1);
+                                Ssse3.Store(LinePD + 0, SrcV1);
+
+                                var SrcV2 = Sse2.LoadVector128(LinePS - 32);
+                                SrcV2 = Ssse3.Shuffle(SrcV2, Mask2);
+                                Ssse3.Store(LinePD + 16, SrcV2);
+
+                                var SrcV3 = Sse2.LoadVector128(LinePS - 48);
+                                SrcV3 = Ssse3.Shuffle(SrcV3, Mask3);
+                                Ssse3.Store(LinePD + 32, SrcV3);
+
+                                LinePD[15] = LinePS[-18]; LinePD[16] = LinePS[-17]; LinePD[17] = LinePS[-16];
+                                LinePD[31] = LinePS[-32]; LinePD[32] = LinePS[-31];
+                            }
+
+                            // 处理剩余像素
+                            for (; X < Width; X++, LinePS -= 3, LinePD += 3) {
+                                LinePD[0] = LinePS[-3]; LinePD[1] = LinePS[-2]; LinePD[2] = LinePS[-1];
+                            }
+                        }
+                    }
+                } finally {
+                    if (Buffer != null) Marshal.FreeHGlobal((IntPtr)Buffer);
+                }
+                return IM_STATUS_OK;
+            }
+
+        }
+
+#endif
 
     }
 
