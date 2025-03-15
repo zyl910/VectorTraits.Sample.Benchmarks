@@ -39,9 +39,21 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         public int Width { get; set; }
         public int Height { get; set; }
 
+
+        // -- Indices of YShuffleX3Kernel
         private static readonly Vector<byte> _shuffleIndices0;
         private static readonly Vector<byte> _shuffleIndices1;
         private static readonly Vector<byte> _shuffleIndices2;
+
+        // -- Indices of YShuffleX2Kernel
+        private static readonly byte _shuffleX2Offset0 = (byte)Vector<byte>.Count;
+        private static readonly byte _shuffleX2Offset1A = 0;
+        private static readonly byte _shuffleX2Offset1B = (byte)(Vector<byte>.Count / 3 * 3);
+        private static readonly byte _shuffleX2Offset2 = 0;
+        private static readonly Vector<byte> _shuffleX2Indices0;
+        private static readonly Vector<byte> _shuffleX2Indices1A;
+        private static readonly Vector<byte> _shuffleX2Indices1B; // Need YShuffleX3Kernel
+        private static readonly Vector<byte> _shuffleX2Indices2;
 
         static ImageFlipXOn24bitBenchmark() {
             const int cbPixel = 3; // 24 bit: Bgr24, Rgb24.
@@ -56,6 +68,11 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             _shuffleIndices0 = Vectors.Create(buf);
             _shuffleIndices1 = Vectors.Create(buf.Slice(vectorWidth * 1));
             _shuffleIndices2 = Vectors.Create(buf.Slice(vectorWidth * 2));
+            // -- Indices of YShuffleX2Kernel
+            _shuffleX2Indices0 = Vector.Subtract(_shuffleIndices0, new Vector<byte>(_shuffleX2Offset0));
+            _shuffleX2Indices1A = _shuffleIndices1; // _shuffleX2Offset1A is 0
+            _shuffleX2Indices1B = Vector.Subtract(_shuffleIndices1, new Vector<byte>(_shuffleX2Offset1B));
+            _shuffleX2Indices2 = _shuffleIndices2; // _shuffleX2Offset2 is 0
         }
 
         ~ImageFlipXOn24bitBenchmark() {
@@ -177,6 +194,30 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
                     percentDifference = 100.0 * countByteDifference / totalByte;
                     writer.WriteLine(string.Format("Difference of UseVectorsArgsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsX2AArgs
+                    UseVectorsX2AArgs();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsX2AArgs: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsX2AArgsParallel
+                    UseVectorsX2AArgsParallel();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsX2AArgsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsX2BArgs
+                    UseVectorsX2BArgs();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsX2BArgs: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
+                    // UseVectorsX2BArgsParallel
+                    UseVectorsX2BArgsParallel();
+                    totalDifference = SumDifference(_expectedBitmapData, _destinationBitmapData, out countByteDifference, out maxDifference);
+                    averageDifference = (countByteDifference > 0) ? (double)totalDifference / countByteDifference : 0;
+                    percentDifference = 100.0 * countByteDifference / totalByte;
+                    writer.WriteLine(string.Format("Difference of UseVectorsX2BArgsParallel: {0}/{1}={2}, max={3}, percentDifference={4:0.000000}%", totalDifference, countByteDifference, averageDifference, maxDifference, percentDifference));
                     // ImageshopSse
 #if NETCOREAPP3_0_OR_GREATER
                     ImageshopSse();
@@ -450,6 +491,170 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                     temp0 = Vectors.YShuffleX3Kernel_Core(data0, data1, data2, indices0arg0, indices0arg1, indices0arg2, indices0arg3);
                     temp1 = Vectors.YShuffleX3Kernel_Core(data0, data1, data2, indices1arg0, indices1arg1, indices1arg2, indices1arg3);
                     temp2 = Vectors.YShuffleX3Kernel_Core(data0, data1, data2, indices2arg0, indices2arg1, indices2arg2, indices2arg3);
+                    // Store.
+                    q[0] = temp0;
+                    q[1] = temp1;
+                    q[2] = temp2;
+                    // Next.
+                    if (p <= pLast) break;
+                    p -= cbPixel;
+                    q += cbPixel;
+                    if (p < pLast) p = pLast; // The last block is also use vector.
+                    if (q > qLast) q = qLast;
+                }
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+        }
+
+        [Benchmark]
+        public void UseVectorsX2AArgs() {
+            UseVectorsX2AArgsDo(_sourceBitmapData, _destinationBitmapData, false);
+        }
+
+        //[Benchmark]
+        public void UseVectorsX2AArgsParallel() {
+            UseVectorsX2AArgsDo(_sourceBitmapData, _destinationBitmapData, true);
+        }
+
+        public static unsafe void UseVectorsX2AArgsDo(BitmapData src, BitmapData dst, bool useParallel = false) {
+            int vectorWidth = Vector<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst, useParallel);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            bool allowParallel = useParallel && (height > 16) && (Environment.ProcessorCount > 1);
+            if (allowParallel) {
+                Parallel.For(0, height, i => {
+                    int start = i;
+                    int len = 1;
+                    byte* pSrc2 = pSrc + start * (long)strideSrc;
+                    byte* pDst2 = pDst + start * (long)strideDst;
+                    UseVectorsX2AArgsDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
+                });
+            } else {
+                UseVectorsX2AArgsDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+            }
+        }
+
+        public static unsafe void UseVectorsX2AArgsDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
+            const int cbPixel = 3; // 24 bit: Bgr24, Rgb24.
+            Vectors.YShuffleX2Kernel_Args(_shuffleX2Indices0, out var indices0arg0, out var indices0arg1, out var indices0arg2, out var indices0arg3);
+            Vectors.YShuffleX3Kernel_Args(_shuffleX2Indices1A, out var indices1arg0, out var indices1arg1, out var indices1arg2, out var indices1arg3);
+            Vectors.YShuffleX2Kernel_Args(_shuffleX2Indices2, out var indices2arg0, out var indices2arg1, out var indices2arg2, out var indices2arg3);
+            int vectorWidth = Vector<byte>.Count;
+            if (width <= vectorWidth) {
+                ScalarDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+                return;
+            }
+            int maxX = width - vectorWidth;
+            byte* pRow = pSrc;
+            byte* qRow = pDst;
+            for (int i = 0; i < height; i++) {
+                Vector<byte>* pLast = (Vector<byte>*)pRow;
+                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * cbPixel);
+                Vector<byte>* p = (Vector<byte>*)(pRow + maxX * cbPixel);
+                Vector<byte>* q = (Vector<byte>*)qRow;
+                for (; ; ) {
+                    Vector<byte> data0, data1, data2, temp0, temp1, temp2;
+                    // Load.
+                    data0 = p[0];
+                    data1 = p[1];
+                    data2 = p[2];
+                    // FlipX.
+                    temp0 = Vectors.YShuffleX2Kernel_Core(data1, data2, indices0arg0, indices0arg1, indices0arg2, indices0arg3);
+                    temp1 = Vectors.YShuffleX3Kernel_Core(data0, data1, data2, indices1arg0, indices1arg1, indices1arg2, indices1arg3);
+                    temp2 = Vectors.YShuffleX2Kernel_Core(data0, data1, indices2arg0, indices2arg1, indices2arg2, indices2arg3);
+                    // Store.
+                    q[0] = temp0;
+                    q[1] = temp1;
+                    q[2] = temp2;
+                    // Next.
+                    if (p <= pLast) break;
+                    p -= cbPixel;
+                    q += cbPixel;
+                    if (p < pLast) p = pLast; // The last block is also use vector.
+                    if (q > qLast) q = qLast;
+                }
+                pRow += strideSrc;
+                qRow += strideDst;
+            }
+        }
+
+        [Benchmark]
+        public void UseVectorsX2BArgs() {
+            UseVectorsX2BArgsDo(_sourceBitmapData, _destinationBitmapData, false);
+        }
+
+        //[Benchmark]
+        public void UseVectorsX2BArgsParallel() {
+            UseVectorsX2BArgsDo(_sourceBitmapData, _destinationBitmapData, true);
+        }
+
+        public static unsafe void UseVectorsX2BArgsDo(BitmapData src, BitmapData dst, bool useParallel = false) {
+            int vectorWidth = Vector<byte>.Count;
+            int width = src.Width;
+            int height = src.Height;
+            if (width <= vectorWidth) {
+                ScalarDo(src, dst, useParallel);
+                return;
+            }
+            int strideSrc = src.Stride;
+            int strideDst = dst.Stride;
+            byte* pSrc = (byte*)src.Scan0.ToPointer();
+            byte* pDst = (byte*)dst.Scan0.ToPointer();
+            bool allowParallel = useParallel && (height > 16) && (Environment.ProcessorCount > 1);
+            if (allowParallel) {
+                Parallel.For(0, height, i => {
+                    int start = i;
+                    int len = 1;
+                    byte* pSrc2 = pSrc + start * (long)strideSrc;
+                    byte* pDst2 = pDst + start * (long)strideDst;
+                    UseVectorsX2BArgsDoBatch(pSrc2, strideSrc, width, len, pDst2, strideDst);
+                });
+            } else {
+                UseVectorsX2BArgsDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+            }
+        }
+
+        public static unsafe void UseVectorsX2BArgsDoBatch(byte* pSrc, int strideSrc, int width, int height, byte* pDst, int strideDst) {
+            const int cbPixel = 3; // 24 bit: Bgr24, Rgb24.
+            int offsetB0 = _shuffleX2Offset1B;
+            int offsetB1 = offsetB0 + Vector<byte>.Count;
+            Vectors.YShuffleX2Kernel_Args(_shuffleX2Indices0, out var indices0arg0, out var indices0arg1, out var indices0arg2, out var indices0arg3);
+            Vectors.YShuffleX2Kernel_Args(_shuffleX2Indices1B, out var indices1arg0, out var indices1arg1, out var indices1arg2, out var indices1arg3);
+            Vectors.YShuffleX2Kernel_Args(_shuffleX2Indices2, out var indices2arg0, out var indices2arg1, out var indices2arg2, out var indices2arg3);
+            int vectorWidth = Vector<byte>.Count;
+            if (width <= vectorWidth) {
+                ScalarDoBatch(pSrc, strideSrc, width, height, pDst, strideDst);
+                return;
+            }
+            int maxX = width - vectorWidth;
+            byte* pRow = pSrc;
+            byte* qRow = pDst;
+            for (int i = 0; i < height; i++) {
+                Vector<byte>* pLast = (Vector<byte>*)pRow;
+                Vector<byte>* qLast = (Vector<byte>*)(qRow + maxX * cbPixel);
+                Vector<byte>* p = (Vector<byte>*)(pRow + maxX * cbPixel);
+                Vector<byte>* q = (Vector<byte>*)qRow;
+                for (; ; ) {
+                    Vector<byte> data0, data1, data2, dataB0, dataB1, temp0, temp1, temp2;
+                    // Load.
+                    data0 = p[0];
+                    data1 = p[1];
+                    data2 = p[2];
+                    dataB0 = *(Vector<byte>*)((byte*)p + offsetB0);
+                    dataB1 = *(Vector<byte>*)((byte*)p + offsetB1);
+                    // FlipX.
+                    temp0 = Vectors.YShuffleX2Kernel_Core(data1, data2, indices0arg0, indices0arg1, indices0arg2, indices0arg3);
+                    temp1 = Vectors.YShuffleX2Kernel_Core(dataB0, dataB1, indices1arg0, indices1arg1, indices1arg2, indices1arg3);
+                    temp2 = Vectors.YShuffleX2Kernel_Core(data0, data1, indices2arg0, indices2arg1, indices2arg2, indices2arg3);
                     // Store.
                     q[0] = temp0;
                     q[1] = temp1;

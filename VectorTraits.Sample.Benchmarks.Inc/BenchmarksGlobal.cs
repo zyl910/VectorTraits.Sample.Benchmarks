@@ -135,7 +135,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks {
         /// </summary>
         /// <param name="writer">The TextWriter.</param>
         public static void DoCheck(TextWriter writer = null) {
-            // - Image
+            // - Complex
             var target = new ComplexMultiplySumBenchmark() { Count = 65535 };
             // - Group
             //var target = new SplitLanes4Double() { Count = 1000 };
