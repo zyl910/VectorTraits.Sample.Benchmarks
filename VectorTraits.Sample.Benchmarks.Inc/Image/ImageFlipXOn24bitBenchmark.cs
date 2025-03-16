@@ -1,4 +1,4 @@
-﻿#undef BENCHMARKS_OFF
+﻿//#undef BENCHMARKS_OFF
 
 using BenchmarkDotNet.Attributes;
 using System;
@@ -809,24 +809,32 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 // 
 // BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
 // Apple M2, 1 CPU, 8 logical and 8 physical cores
-// .NET SDK 8.0.204
+// .NET SDK 9.0.102
 //   [Host]     : .NET 6.0.33 (6.0.3324.36610), Arm64 RyuJIT AdvSIMD
 //   DefaultJob : .NET 6.0.33 (6.0.3324.36610), Arm64 RyuJIT AdvSIMD
 // 
-// 
-// | Method         | Width | Mean         | Error     | StdDev    | Ratio |
-// |--------------- |------ |-------------:|----------:|----------:|------:|
-// | Scalar         | 1024  |  1,504.84 us |  0.449 us |  0.375 us |  1.00 |
-// | UseVectors     | 1024  |    119.36 us |  0.042 us |  0.040 us |  0.08 |
-// | UseVectorsArgs | 1024  |     83.89 us |  0.160 us |  0.149 us |  0.06 |
-// |                |       |              |           |           |       |
-// | Scalar         | 2048  |  6,011.17 us |  1.346 us |  1.193 us |  1.00 |
-// | UseVectors     | 2048  |    476.02 us |  6.485 us |  6.066 us |  0.08 |
-// | UseVectorsArgs | 2048  |    328.52 us |  0.298 us |  0.264 us |  0.05 |
-// |                |       |              |           |           |       |
-// | Scalar         | 4096  | 24,403.68 us |  6.763 us |  6.326 us |  1.00 |
-// | UseVectors     | 4096  |  3,378.05 us |  1.674 us |  1.566 us |  0.14 |
-// | UseVectorsArgs | 4096  |  2,852.52 us | 22.086 us | 20.660 us |  0.12 |
+// | Method            | Width | Mean         | Error      | StdDev     | Ratio | RatioSD |
+// |------------------ |------ |-------------:|-----------:|-----------:|------:|--------:|
+// | Scalar            | 1024  |  1,504.09 us |   0.575 us |   0.480 us |  1.00 |    0.00 |
+// | UseVectors        | 1024  |    120.26 us |   1.569 us |   1.468 us |  0.08 |    0.00 |
+// | UseVectorsArgs    | 1024  |     83.77 us |   0.067 us |   0.056 us |  0.06 |    0.00 |
+// | UseVectorsX2AArgs | 1024  |     72.68 us |   0.034 us |   0.030 us |  0.05 |    0.00 |
+// | UseVectorsX2BArgs | 1024  |     82.61 us |   0.283 us |   0.265 us |  0.05 |    0.00 |
+// | ImageshopSse      | 1024  |           NA |         NA |         NA |     ? |       ? |
+// |                   |       |              |            |            |       |         |
+// | Scalar            | 2048  |  6,015.27 us |   5.786 us |   4.831 us |  1.00 |    0.00 |
+// | UseVectors        | 2048  |    479.44 us |   0.424 us |   0.397 us |  0.08 |    0.00 |
+// | UseVectorsArgs    | 2048  |    320.78 us |   0.212 us |   0.165 us |  0.05 |    0.00 |
+// | UseVectorsX2AArgs | 2048  |    332.22 us |   0.314 us |   0.263 us |  0.06 |    0.00 |
+// | UseVectorsX2BArgs | 2048  |    319.60 us |   1.490 us |   1.394 us |  0.05 |    0.00 |
+// | ImageshopSse      | 2048  |           NA |         NA |         NA |     ? |       ? |
+// |                   |       |              |            |            |       |         |
+// | Scalar            | 4096  | 24,709.98 us | 308.477 us | 288.549 us |  1.00 |    0.02 |
+// | UseVectors        | 4096  |  3,362.91 us |   1.807 us |   1.509 us |  0.14 |    0.00 |
+// | UseVectorsArgs    | 4096  |  2,840.79 us |  13.642 us |  12.760 us |  0.11 |    0.00 |
+// | UseVectorsX2AArgs | 4096  |  2,592.20 us |  25.326 us |  23.690 us |  0.10 |    0.00 |
+// | UseVectorsX2BArgs | 4096  |  2,843.72 us |  30.984 us |  28.982 us |  0.12 |    0.00 |
+// | ImageshopSse      | 4096  |           NA |         NA |         NA |     ? |       ? |
 
 // -- `.NET7.0` on Arm
 // Vectors.Instance:	VectorTraits128AdvSimdB64	// AdvSimd
@@ -834,24 +842,33 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 // 
 // BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
 // Apple M2, 1 CPU, 8 logical and 8 physical cores
-// .NET SDK 8.0.204
+// .NET SDK 9.0.102
 //   [Host]     : .NET 7.0.20 (7.0.2024.26716), Arm64 RyuJIT AdvSIMD
 //   DefaultJob : .NET 7.0.20 (7.0.2024.26716), Arm64 RyuJIT AdvSIMD
 // 
 // 
-// | Method         | Width | Mean         | Error    | StdDev   | Ratio |
-// |--------------- |------ |-------------:|---------:|---------:|------:|
-// | Scalar         | 1024  |  1,504.47 us | 0.639 us | 0.566 us |  1.00 |
-// | UseVectors     | 1024  |    108.65 us | 0.139 us | 0.123 us |  0.07 |
-// | UseVectorsArgs | 1024  |     81.78 us | 0.142 us | 0.133 us |  0.05 |
-// |                |       |              |          |          |       |
-// | Scalar         | 2048  |  6,014.20 us | 2.201 us | 1.718 us |  1.00 |
-// | UseVectors     | 2048  |    427.18 us | 0.286 us | 0.267 us |  0.07 |
-// | UseVectorsArgs | 2048  |    318.35 us | 0.373 us | 0.330 us |  0.05 |
-// |                |       |              |          |          |       |
-// | Scalar         | 4096  | 24,403.88 us | 6.181 us | 5.480 us |  1.00 |
-// | UseVectors     | 4096  |  3,280.84 us | 4.771 us | 4.463 us |  0.13 |
-// | UseVectorsArgs | 4096  |  2,873.47 us | 4.675 us | 4.373 us |  0.12 |
+// | Method            | Width | Mean         | Error     | StdDev    | Ratio | RatioSD |
+// |------------------ |------ |-------------:|----------:|----------:|------:|--------:|
+// | Scalar            | 1024  |  1,506.38 us |  2.527 us |  2.240 us |  1.00 |    0.00 |
+// | UseVectors        | 1024  |    108.38 us |  0.170 us |  0.159 us |  0.07 |    0.00 |
+// | UseVectorsArgs    | 1024  |     81.57 us |  0.070 us |  0.058 us |  0.05 |    0.00 |
+// | UseVectorsX2AArgs | 1024  |     69.35 us |  0.111 us |  0.098 us |  0.05 |    0.00 |
+// | UseVectorsX2BArgs | 1024  |     80.66 us |  0.104 us |  0.081 us |  0.05 |    0.00 |
+// | ImageshopSse      | 1024  |           NA |        NA |        NA |     ? |       ? |
+// |                   |       |              |           |           |       |         |
+// | Scalar            | 2048  |  6,014.79 us |  2.863 us |  2.235 us |  1.00 |    0.00 |
+// | UseVectors        | 2048  |    425.96 us |  0.234 us |  0.207 us |  0.07 |    0.00 |
+// | UseVectorsArgs    | 2048  |    317.95 us |  0.273 us |  0.228 us |  0.05 |    0.00 |
+// | UseVectorsX2AArgs | 2048  |    270.73 us |  0.238 us |  0.199 us |  0.05 |    0.00 |
+// | UseVectorsX2BArgs | 2048  |    308.50 us |  1.324 us |  1.239 us |  0.05 |    0.00 |
+// | ImageshopSse      | 2048  |           NA |        NA |        NA |     ? |       ? |
+// |                   |       |              |           |           |       |         |
+// | Scalar            | 4096  | 24,451.53 us | 31.420 us | 27.853 us |  1.00 |    0.00 |
+// | UseVectors        | 4096  |  3,263.99 us |  3.354 us |  2.801 us |  0.13 |    0.00 |
+// | UseVectorsArgs    | 4096  |  2,868.68 us |  7.482 us |  6.999 us |  0.12 |    0.00 |
+// | UseVectorsX2AArgs | 4096  |  2,512.38 us | 11.036 us |  9.783 us |  0.10 |    0.00 |
+// | UseVectorsX2BArgs | 4096  |  2,787.01 us |  4.692 us |  3.918 us |  0.11 |    0.00 |
+// | ImageshopSse      | 4096  |           NA |        NA |        NA |     ? |       ? |
 
 // -- `.NET8.0` on Arm
 // Vectors.Instance:	VectorTraits128AdvSimdB64	// AdvSimd
@@ -859,120 +876,161 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
 // 
 // BenchmarkDotNet v0.14.0, macOS Sequoia 15.1.1 (24B91) [Darwin 24.1.0]
 // Apple M2, 1 CPU, 8 logical and 8 physical cores
-// .NET SDK 8.0.204
-//   [Host]     : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
-//   DefaultJob : .NET 8.0.4 (8.0.424.16909), Arm64 RyuJIT AdvSIMD
+// .NET SDK 9.0.102
+//   [Host]     : .NET 8.0.12 (8.0.1224.60305), Arm64 RyuJIT AdvSIMD
+//   DefaultJob : .NET 8.0.12 (8.0.1224.60305), Arm64 RyuJIT AdvSIMD
 // 
-// 
-// | Method         | Width | Mean        | Error     | StdDev    | Ratio |
-// |--------------- |------ |------------:|----------:|----------:|------:|
-// | Scalar         | 1024  |   478.43 us |  2.053 us |  1.921 us |  1.00 |
-// | UseVectors     | 1024  |    61.18 us |  0.677 us |  0.633 us |  0.13 |
-// | UseVectorsArgs | 1024  |    61.93 us |  0.225 us |  0.199 us |  0.13 |
-// |                |       |             |           |           |       |
-// | Scalar         | 2048  | 1,891.65 us |  5.621 us |  4.693 us |  1.00 |
-// | UseVectors     | 2048  |   260.20 us |  0.201 us |  0.179 us |  0.14 |
-// | UseVectorsArgs | 2048  |   263.75 us |  0.851 us |  0.796 us |  0.14 |
-// |                |       |             |           |           |       |
-// | Scalar         | 4096  | 7,900.34 us | 91.227 us | 85.333 us |  1.00 |
-// | UseVectors     | 4096  | 2,310.99 us | 17.264 us | 14.416 us |  0.29 |
-// | UseVectorsArgs | 4096  | 2,310.74 us |  1.605 us |  1.423 us |  0.29 |
+// | Method            | Width | Mean        | Error     | StdDev    | Ratio | RatioSD |
+// |------------------ |------ |------------:|----------:|----------:|------:|--------:|
+// | Scalar            | 1024  |   489.45 us |  9.667 us |  8.570 us |  1.00 |    0.02 |
+// | UseVectors        | 1024  |    60.78 us |  0.050 us |  0.045 us |  0.12 |    0.00 |
+// | UseVectorsArgs    | 1024  |    60.20 us |  0.621 us |  0.551 us |  0.12 |    0.00 |
+// | UseVectorsX2AArgs | 1024  |    61.02 us |  0.054 us |  0.045 us |  0.12 |    0.00 |
+// | UseVectorsX2BArgs | 1024  |    73.73 us |  0.159 us |  0.141 us |  0.15 |    0.00 |
+// | ImageshopSse      | 1024  |          NA |        NA |        NA |     ? |       ? |
+// |                   |       |             |           |           |       |         |
+// | Scalar            | 2048  | 1,904.18 us | 25.572 us | 23.920 us |  1.00 |    0.02 |
+// | UseVectors        | 2048  |   262.79 us |  0.482 us |  0.428 us |  0.14 |    0.00 |
+// | UseVectorsArgs    | 2048  |   266.08 us |  1.379 us |  1.290 us |  0.14 |    0.00 |
+// | UseVectorsX2AArgs | 2048  |   266.29 us |  0.949 us |  0.887 us |  0.14 |    0.00 |
+// | UseVectorsX2BArgs | 2048  |   297.26 us |  1.482 us |  1.237 us |  0.16 |    0.00 |
+// | ImageshopSse      | 2048  |          NA |        NA |        NA |     ? |       ? |
+// |                   |       |             |           |           |       |         |
+// | Scalar            | 4096  | 8,042.44 us | 17.405 us | 16.281 us |  1.00 |    0.00 |
+// | UseVectors        | 4096  | 2,307.59 us |  2.411 us |  1.882 us |  0.29 |    0.00 |
+// | UseVectorsArgs    | 4096  | 2,309.09 us |  4.411 us |  3.910 us |  0.29 |    0.00 |
+// | UseVectorsX2AArgs | 4096  | 2,193.09 us |  7.278 us |  6.078 us |  0.27 |    0.00 |
+// | UseVectorsX2BArgs | 4096  | 2,478.22 us |  3.373 us |  2.816 us |  0.31 |    0.00 |
+// | ImageshopSse      | 4096  |          NA |        NA |        NA |     ? |       ? |
 
 // -- `.NET6.0` on X86
 // Vectors.Instance:       VectorTraits256Avx2     // Avx, Avx2, Sse, Sse2
 // YShuffleX3Kernel_AcceleratedTypes:      SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
 // 
-// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.3476)
 // AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
-// .NET SDK 8.0.403
-//   [Host]     : .NET 6.0.35 (6.0.3524.45918), X64 RyuJIT AVX2
-//   DefaultJob : .NET 6.0.35 (6.0.3524.45918), X64 RyuJIT AVX2
+// .NET SDK 9.0.200
+//   [Host]     : .NET 6.0.36 (6.0.3624.51421), X64 RyuJIT AVX2
+//   DefaultJob : .NET 6.0.36 (6.0.3624.51421), X64 RyuJIT AVX2
 // 
 // 
-// | Method         | Width | Mean        | Error     | StdDev    | Ratio | RatioSD | Code Size |
-// |--------------- |------ |------------:|----------:|----------:|------:|--------:|----------:|
-// | Scalar         | 1024  |  1,110.8 us |  21.74 us |  22.33 us |  1.00 |    0.03 |   2,053 B |
-// | UseVectors     | 1024  |    492.3 us |   9.74 us |  15.72 us |  0.44 |    0.02 |   4,505 B |
-// | UseVectorsArgs | 1024  |    238.9 us |   3.14 us |   2.94 us |  0.22 |    0.00 |   4,234 B |
-// |                |       |             |           |           |       |         |           |
-// | Scalar         | 2048  |  4,430.0 us |  87.93 us |  94.08 us |  1.00 |    0.03 |   2,053 B |
-// | UseVectors     | 2048  |  2,319.6 us |  18.62 us |  17.41 us |  0.52 |    0.01 |   4,505 B |
-// | UseVectorsArgs | 2048  |  1,793.2 us |  34.57 us |  33.95 us |  0.40 |    0.01 |   4,234 B |
-// |                |       |             |           |           |       |         |           |
-// | Scalar         | 4096  | 16,536.4 us | 329.23 us | 618.37 us |  1.00 |    0.05 |   2,053 B |
-// | UseVectors     | 4096  |  9,040.4 us | 104.73 us |  97.96 us |  0.55 |    0.02 |   4,490 B |
-// | UseVectorsArgs | 4096  |  6,728.0 us | 120.28 us | 133.69 us |  0.41 |    0.02 |   4,219 B |
+// | Method            | Width | Mean        | Error     | StdDev    | Ratio | Code Size |
+// |------------------ |------ |------------:|----------:|----------:|------:|----------:|
+// | Scalar            | 1024  |  1,047.8 us |  10.47 us |   9.79 us |  1.00 |   2,053 B |
+// | UseVectors        | 1024  |    375.6 us |   7.49 us |   7.69 us |  0.36 |   4,505 B |
+// | UseVectorsArgs    | 1024  |    202.0 us |   4.02 us |   4.94 us |  0.19 |   4,234 B |
+// | UseVectorsX2AArgs | 1024  |    149.6 us |   2.97 us |   8.63 us |  0.14 |   4,275 B |
+// | UseVectorsX2BArgs | 1024  |    125.2 us |   2.39 us |   2.11 us |  0.12 |   3,835 B |
+// | ImageshopSse      | 1024  |    145.0 us |   2.81 us |   4.30 us |  0.14 |   1,440 B |
+// |                   |       |             |           |           |       |           |
+// | Scalar            | 2048  |  4,248.4 us |  41.26 us |  38.59 us |  1.00 |   2,053 B |
+// | UseVectors        | 2048  |  2,578.7 us |  18.84 us |  17.63 us |  0.61 |   4,505 B |
+// | UseVectorsArgs    | 2048  |  2,022.4 us |  22.92 us |  21.44 us |  0.48 |   4,234 B |
+// | UseVectorsX2AArgs | 2048  |  1,710.7 us |  16.22 us |  14.38 us |  0.40 |   4,275 B |
+// | UseVectorsX2BArgs | 2048  |  1,682.1 us |  18.11 us |  16.94 us |  0.40 |   3,835 B |
+// | ImageshopSse      | 2048  |  1,854.0 us |  21.15 us |  19.78 us |  0.44 |   1,440 B |
+// |                   |       |             |           |           |       |           |
+// | Scalar            | 4096  | 16,231.0 us | 133.81 us | 118.62 us |  1.00 |   2,053 B |
+// | UseVectors        | 4096  |  8,418.7 us |  55.64 us |  52.04 us |  0.52 |   4,490 B |
+// | UseVectorsArgs    | 4096  |  5,906.4 us |  49.55 us |  46.34 us |  0.36 |   4,219 B |
+// | UseVectorsX2AArgs | 4096  |  5,497.9 us |  46.65 us |  43.64 us |  0.34 |   4,260 B |
+// | UseVectorsX2BArgs | 4096  |  5,385.9 us |  79.28 us |  74.16 us |  0.33 |   3,820 B |
+// | ImageshopSse      | 4096  |  5,784.4 us |  50.70 us |  44.94 us |  0.36 |   1,440 B |
 
 // -- `.NET7.0` on X86
 //Vectors.Instance:       VectorTraits256Avx2     // Avx, Avx2, Sse, Sse2
 //YShuffleX3Kernel_AcceleratedTypes:      SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
 //
-//BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
-//AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
-//.NET SDK 8.0.403
-//  [Host]     : .NET 7.0.20 (7.0.2024.26716), X64 RyuJIT AVX2
-//  DefaultJob : .NET 7.0.20 (7.0.2024.26716), X64 RyuJIT AVX2
-//
-//
-//| Method         | Width | Mean        | Error     | StdDev    | Ratio | RatioSD | Code Size |
-//|--------------- |------ |------------:|----------:|----------:|------:|--------:|----------:|
-//| Scalar         | 1024  |  1,120.3 us |  22.39 us |  25.78 us |  1.00 |    0.03 |   1,673 B |
-//| UseVectors     | 1024  |    236.7 us |   4.63 us |   5.69 us |  0.21 |    0.01 |   3,724 B |
-//| UseVectorsArgs | 1024  |    209.5 us |   4.00 us |   4.45 us |  0.19 |    0.01 |   4,031 B |
-//|                |       |             |           |           |       |         |           |
-//| Scalar         | 2048  |  4,431.6 us |  65.38 us |  61.16 us |  1.00 |    0.02 |   1,673 B |
-//| UseVectors     | 2048  |  1,866.8 us |  36.26 us |  48.41 us |  0.42 |    0.01 |   3,724 B |
-//| UseVectorsArgs | 2048  |  1,889.9 us |  37.54 us |  74.97 us |  0.43 |    0.02 |   4,031 B |
-//|                |       |             |           |           |       |         |           |
-//| Scalar         | 4096  | 16,617.9 us | 329.75 us | 559.94 us |  1.00 |    0.05 |   1,673 B |
-//| UseVectors     | 4096  |  6,337.2 us |  62.08 us |  55.03 us |  0.38 |    0.01 |   3,709 B |
-//| UseVectorsArgs | 4096  |  6,408.1 us | 126.27 us | 118.11 us |  0.39 |    0.01 |   4,016 B |
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.3476)
+// AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
+// .NET SDK 9.0.200
+//   [Host]     : .NET 7.0.20 (7.0.2024.26716), X64 RyuJIT AVX2
+//   DefaultJob : .NET 7.0.20 (7.0.2024.26716), X64 RyuJIT AVX2
+// 
+// 
+// | Method            | Width | Mean        | Error     | StdDev    | Ratio | Code Size |
+// |------------------ |------ |------------:|----------:|----------:|------:|----------:|
+// | Scalar            | 1024  |  1,009.2 us |  10.62 us |   9.42 us |  1.00 |   1,673 B |
+// | UseVectors        | 1024  |    214.5 us |   4.05 us |   3.98 us |  0.21 |   3,724 B |
+// | UseVectorsArgs    | 1024  |    179.5 us |   3.47 us |   3.71 us |  0.18 |   4,031 B |
+// | UseVectorsX2AArgs | 1024  |    146.9 us |   2.89 us |   2.84 us |  0.15 |   3,912 B |
+// | UseVectorsX2BArgs | 1024  |    119.5 us |   2.39 us |   2.75 us |  0.12 |   3,673 B |
+// | ImageshopSse      | 1024  |    149.3 us |   2.92 us |   5.42 us |  0.15 |   1,350 B |
+// |                   |       |             |           |           |       |           |
+// | Scalar            | 2048  |  4,233.3 us |  48.45 us |  45.32 us |  1.00 |   1,673 B |
+// | UseVectors        | 2048  |  1,707.1 us |  21.99 us |  20.57 us |  0.40 |   3,724 B |
+// | UseVectorsArgs    | 2048  |  1,625.7 us |  14.62 us |  13.68 us |  0.38 |   4,031 B |
+// | UseVectorsX2AArgs | 2048  |  1,519.1 us |  19.57 us |  18.30 us |  0.36 |   3,912 B |
+// | UseVectorsX2BArgs | 2048  |  1,439.8 us |  16.77 us |  15.69 us |  0.34 |   3,673 B |
+// | ImageshopSse      | 2048  |  1,425.7 us |  18.37 us |  16.28 us |  0.34 |   1,350 B |
+// |                   |       |             |           |           |       |           |
+// | Scalar            | 4096  | 15,994.4 us | 134.29 us | 119.04 us |  1.00 |   1,673 B |
+// | UseVectors        | 4096  |  5,962.0 us |  76.95 us |  68.22 us |  0.37 |   3,709 B |
+// | UseVectorsArgs    | 4096  |  5,858.2 us |  74.10 us |  69.31 us |  0.37 |   4,016 B |
+// | UseVectorsX2AArgs | 4096  |  5,528.2 us |  34.26 us |  32.05 us |  0.35 |   3,897 B |
+// | UseVectorsX2BArgs | 4096  |  5,342.9 us |  51.69 us |  48.35 us |  0.33 |   3,658 B |
+// | ImageshopSse      | 4096  |  5,603.8 us |  38.53 us |  34.15 us |  0.35 |   1,350 B |
 
 // -- `.NET8.0` on X86
 // Vectors.Instance:       VectorTraits256Avx2     // Avx, Avx2, Sse, Sse2, Avx512VL
 // YShuffleX3Kernel_AcceleratedTypes:      SByte, Byte, Int16, UInt16, Int32, UInt32, Int64, UInt64, Single, Double
 // 
-// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.3476)
 // AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
-// .NET SDK 8.0.403
-//   [Host]     : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
-//   DefaultJob : .NET 8.0.10 (8.0.1024.46610), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+// .NET SDK 9.0.200
+//   [Host]     : .NET 8.0.13 (8.0.1325.6609), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+//   DefaultJob : .NET 8.0.13 (8.0.1325.6609), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
 // 
 // 
-// | Method         | Width | Mean        | Error      | StdDev     | Ratio | RatioSD |
-// |--------------- |------ |------------:|-----------:|-----------:|------:|--------:|
-// | Scalar         | 1024  |   549.22 us |  10.876 us |  11.637 us |  1.00 |    0.03 |
-// | UseVectors     | 1024  |    68.21 us |   1.326 us |   2.142 us |  0.12 |    0.00 |
-// | UseVectorsArgs | 1024  |    68.71 us |   1.360 us |   2.453 us |  0.13 |    0.01 |
-// |                |       |             |            |            |       |         |
-// | Scalar         | 2048  | 2,704.83 us |  53.643 us |  92.531 us |  1.00 |    0.05 |
-// | UseVectors     | 2048  | 1,014.52 us |   8.824 us |   7.822 us |  0.38 |    0.01 |
-// | UseVectorsArgs | 2048  | 1,020.66 us |  15.739 us |  14.723 us |  0.38 |    0.01 |
-// |                |       |             |            |            |       |         |
-// | Scalar         | 4096  | 9,778.60 us | 114.022 us | 106.656 us |  1.00 |    0.01 |
-// | UseVectors     | 4096  | 4,360.43 us |  60.832 us |  56.903 us |  0.45 |    0.01 |
-// | UseVectorsArgs | 4096  | 4,341.89 us |  82.877 us | 101.780 us |  0.44 |    0.01 |
+// | Method            | Width | Mean         | Error     | StdDev    | Ratio | Code Size |
+// |------------------ |------ |-------------:|----------:|----------:|------:|----------:|
+// | Scalar            | 1024  |    565.61 us |  6.062 us |  5.671 us |  1.00 |        NA |
+// | UseVectors        | 1024  |     70.15 us |  0.946 us |  0.839 us |  0.12 |        NA |
+// | UseVectorsArgs    | 1024  |     71.35 us |  1.395 us |  2.368 us |  0.13 |        NA |
+// | UseVectorsX2AArgs | 1024  |     70.38 us |  1.389 us |  1.757 us |  0.12 |        NA |
+// | UseVectorsX2BArgs | 1024  |     71.11 us |  1.417 us |  1.325 us |  0.13 |        NA |
+// | ImageshopSse      | 1024  |    147.10 us |  3.065 us |  5.286 us |  0.28 |   1,304 B |
+// |                   |       |              |           |           |       |           |
+// | Scalar            | 2048  |  2,778.83 us | 31.741 us | 28.137 us |  1.00 |        NA |
+// | UseVectors        | 2048  |  1,021.40 us | 10.916 us | 10.211 us |  0.37 |        NA |
+// | UseVectorsArgs    | 2048  |  1,057.84 us | 20.079 us | 18.782 us |  0.38 |        NA |
+// | UseVectorsX2AArgs | 2048  |  1,057.32 us | 16.454 us | 15.391 us |  0.38 |        NA |
+// | UseVectorsX2BArgs | 2048  |  1,012.21 us | 13.793 us | 12.227 us |  0.36 |        NA |
+// | ImageshopSse      | 2048  |  1,742.22 us | 15.396 us | 14.401 us |  0.63 |   1,308 B |
+// |                   |       |              |           |           |       |           |
+// | Scalar            | 4096  | 11,051.36 us | 86.964 us | 77.092 us |  1.00 |        NA |
+// | UseVectors        | 4096  |  4,408.84 us | 48.341 us | 45.218 us |  0.40 |        NA |
+// | UseVectorsArgs    | 4096  |  4,330.39 us | 39.934 us | 35.401 us |  0.39 |        NA |
+// | UseVectorsX2AArgs | 4096  |  4,336.47 us | 48.908 us | 45.748 us |  0.39 |        NA |
+// | UseVectorsX2BArgs | 4096  |  4,083.04 us | 72.525 us | 67.840 us |  0.37 |        NA |
+// | ImageshopSse      | 4096  |  5,692.53 us | 53.488 us | 50.032 us |  0.52 |   1,311 B |
 
 // -- `.NET Framework` on X86
 // Vectors.Instance:       VectorTraits256Base     //
 // YShuffleX3Kernel_AcceleratedTypes:      None
 // 
-// BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4541/23H2/2023Update/SunValley3)
+// BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.3476)
 // AMD Ryzen 7 7840H w/ Radeon 780M Graphics, 1 CPU, 16 logical and 8 physical cores
-//   [Host]     : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
-//   DefaultJob : .NET Framework 4.8.1 (4.8.9282.0), X64 RyuJIT VectorSize=256
+//   [Host]     : .NET Framework 4.8.1 (4.8.9290.0), X64 RyuJIT VectorSize=256
+//   DefaultJob : .NET Framework 4.8.1 (4.8.9290.0), X64 RyuJIT VectorSize=256
 // 
 // 
-// | Method         | Width | Mean        | Error       | StdDev      | Ratio | RatioSD | Code Size |
-// |--------------- |------ |------------:|------------:|------------:|------:|--------:|----------:|
-// | Scalar         | 1024  |    999.7 us |    14.16 us |    11.82 us |  1.00 |    0.02 |   2,717 B |
-// | UseVectors     | 1024  |  6,040.0 us |    57.76 us |    54.03 us |  6.04 |    0.09 |        NA |
-// | UseVectorsArgs | 1024  |  5,896.4 us |   105.77 us |    98.94 us |  5.90 |    0.12 |        NA |
-// |                |       |             |             |             |       |         |           |
-// | Scalar         | 2048  |  4,267.0 us |    74.72 us |    69.90 us |  1.00 |    0.02 |   2,717 B |
-// | UseVectors     | 2048  | 23,070.7 us |   250.11 us |   221.72 us |  5.41 |    0.10 |        NA |
-// | UseVectorsArgs | 2048  | 23,106.7 us |   241.23 us |   201.44 us |  5.42 |    0.10 |        NA |
-// |                |       |             |             |             |       |         |           |
-// | Scalar         | 4096  | 15,977.6 us |   308.91 us |   489.96 us |  1.00 |    0.04 |   2,717 B |
-// | UseVectors     | 4096  | 91,944.4 us | 1,152.83 us | 1,078.36 us |  5.76 |    0.19 |        NA |
-// | UseVectorsArgs | 4096  | 92,677.3 us | 1,555.69 us | 1,527.90 us |  5.81 |    0.20 |        NA |
+// | Method            | Width | Mean       | Error     | StdDev    | Ratio | RatioSD | Code Size |
+// |------------------ |------ |-----------:|----------:|----------:|------:|--------:|----------:|
+// | Scalar            | 1024  |   1.033 ms | 0.0177 ms | 0.0165 ms |  1.00 |    0.02 |   2,717 B |
+// | UseVectors        | 1024  |   6.161 ms | 0.0461 ms | 0.0409 ms |  5.96 |    0.10 |   4,883 B |
+// | UseVectorsArgs    | 1024  |   6.089 ms | 0.1066 ms | 0.0998 ms |  5.89 |    0.13 |   4,928 B |
+// | UseVectorsX2AArgs | 1024  |   6.349 ms | 0.0531 ms | 0.0497 ms |  6.15 |    0.11 |   5,288 B |
+// | UseVectorsX2BArgs | 1024  |   6.512 ms | 0.1288 ms | 0.1205 ms |  6.30 |    0.15 |   4,794 B |
+// |                   |       |            |           |           |       |         |           |
+// | Scalar            | 2048  |   4.284 ms | 0.0539 ms | 0.0504 ms |  1.00 |    0.02 |   2,717 B |
+// | UseVectors        | 2048  |  23.636 ms | 0.3372 ms | 0.3155 ms |  5.52 |    0.09 |   4,883 B |
+// | UseVectorsArgs    | 2048  |  23.650 ms | 0.2341 ms | 0.2190 ms |  5.52 |    0.08 |   4,928 B |
+// | UseVectorsX2AArgs | 2048  |  25.062 ms | 0.3512 ms | 0.3113 ms |  5.85 |    0.10 |   5,288 B |
+// | UseVectorsX2BArgs | 2048  |  25.362 ms | 0.3052 ms | 0.2706 ms |  5.92 |    0.09 |   4,794 B |
+// |                   |       |            |           |           |       |         |           |
+// | Scalar            | 4096  |  16.291 ms | 0.2417 ms | 0.2261 ms |  1.00 |    0.02 |   2,717 B |
+// | UseVectors        | 4096  |  94.486 ms | 1.5107 ms | 1.4131 ms |  5.80 |    0.11 |   4,883 B |
+// | UseVectorsArgs    | 4096  |  93.715 ms | 0.8965 ms | 0.7486 ms |  5.75 |    0.09 |   4,928 B |
+// | UseVectorsX2AArgs | 4096  |  99.979 ms | 1.9541 ms | 1.9192 ms |  6.14 |    0.14 |   5,288 B |
+// | UseVectorsX2BArgs | 4096  | 101.354 ms | 1.6959 ms | 1.5864 ms |  6.22 |    0.13 |   4,794 B |
