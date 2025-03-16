@@ -51,8 +51,8 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
         private static readonly byte _shuffleX2Offset1B = (byte)(Vector<byte>.Count / 3 * 3);
         private static readonly byte _shuffleX2Offset2 = 0;
         private static readonly Vector<byte> _shuffleX2Indices0;
-        private static readonly Vector<byte> _shuffleX2Indices1A;
-        private static readonly Vector<byte> _shuffleX2Indices1B; // Need YShuffleX3Kernel
+        private static readonly Vector<byte> _shuffleX2Indices1A; // Need YShuffleX3Kernel
+        private static readonly Vector<byte> _shuffleX2Indices1B;
         private static readonly Vector<byte> _shuffleX2Indices2;
 
         static ImageFlipXOn24bitBenchmark() {
@@ -723,7 +723,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
             //                 SrcV3 = _mm_shuffle_epi8(SrcV3, Mask3);
             //                 _mm_storeu_si128((__m128i *)(LinePD + 32), SrcV3);
             //                 LinePD[15] = LinePS[-18]; LinePD[16] = LinePS[-17]; LinePD[17] = LinePS[-16];
-            //                 LinePD[31] = LinePS[-32]; LinePD[32] = LinePS[-31];
+            //                 LinePD[30] = LinePS[-33]; LinePD[31] = LinePS[-32]; LinePD[32] = LinePS[-31];
             //             }
             //             for (; X < Width; X++, LinePS -= 3, LinePD += 3) {
             //                 LinePD[0] = LinePS[-3]; LinePD[1] = LinePS[-2]; LinePD[2] = LinePS[-1];
@@ -778,7 +778,7 @@ namespace Zyl.VectorTraits.Sample.Benchmarks.Image {
                                 Ssse3.Store(LinePD + 32, SrcV3);
 
                                 LinePD[15] = LinePS[-18]; LinePD[16] = LinePS[-17]; LinePD[17] = LinePS[-16];
-                                LinePD[31] = LinePS[-32]; LinePD[32] = LinePS[-31];
+                                LinePD[30] = LinePS[-33]; LinePD[31] = LinePS[-32]; LinePD[32] = LinePS[-31];
                             }
 
                             // 处理剩余像素
